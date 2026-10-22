@@ -16,7 +16,7 @@ class LoadingController extends ChangeNotifier {
 
   bool _isButtonEnabled = false;
   bool _isLoadingComplete = false;
-  String _statusMessage = 'Recopilando recursos del sistema...';
+  String _statusMessage = 'Cargando componentes y sonidos...';
   Timer? _timer;
 
   LoadingController({

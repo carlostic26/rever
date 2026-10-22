@@ -48,7 +48,7 @@ class HomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Rever Verbal',
+                  'Retrovoz',
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w700,
                     fontSize: 18,
@@ -98,7 +98,9 @@ class HomeScreen extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF8B5CF6).withValues(alpha: 0.35),
+                          color: const Color(
+                            0xFF8B5CF6,
+                          ).withValues(alpha: 0.35),
                           blurRadius: 18,
                           offset: const Offset(0, 8),
                         ),
@@ -106,7 +108,10 @@ class HomeScreen extends StatelessWidget {
                     ),
                     child: Center(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20.0,
+                          vertical: 12.0,
+                        ),
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Column(
@@ -147,7 +152,10 @@ class HomeScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 16),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 8,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.black.withValues(alpha: 0.25),
                                   borderRadius: BorderRadius.circular(20),
@@ -191,7 +199,8 @@ class HomeScreen extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (_) => const ComingSoonScreen(
                           title: 'Grabaciones guardadas',
-                          description: 'Aquí podrás gestionar, reproducir y compartir todos tus audios grabados e invertidos.',
+                          description:
+                              'Aquí podrás gestionar, reproducir y compartir todos tus audios grabados e invertidos.',
                           icon: Icons.folder_special_rounded,
                         ),
                       ),
@@ -220,7 +229,10 @@ class HomeScreen extends StatelessWidget {
                     ),
                     child: Center(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20.0,
+                          vertical: 12.0,
+                        ),
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Column(
@@ -230,7 +242,9 @@ class HomeScreen extends StatelessWidget {
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: AppColors.electricBlue.withValues(alpha: 0.15),
+                                  color: AppColors.electricBlue.withValues(
+                                    alpha: 0.15,
+                                  ),
                                 ),
                                 child: const Icon(
                                   Icons.folder_special_rounded,
@@ -261,9 +275,14 @@ class HomeScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 16),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 8,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.darkSurfaceStrong.withValues(alpha: 0.6),
+                                  color: AppColors.darkSurfaceStrong.withValues(
+                                    alpha: 0.6,
+                                  ),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Row(

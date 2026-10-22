@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 import 'core/di/injection_container.dart';
 import 'core/routes/app_router.dart';
 import 'core/routes/app_routes.dart';
@@ -26,7 +27,7 @@ class ReverApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Rever',
+      title: 'Retrovoz',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       initialRoute: AppRoutes.loading,

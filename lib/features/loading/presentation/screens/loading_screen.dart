@@ -4,22 +4,17 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../controllers/loading_controller.dart';
-import '../widgets/counting_animation.dart';
 import '../widgets/loading_progress_bar.dart';
 
 class LoadingScreen extends StatefulWidget {
   final String title;
   final String subtitle;
-  final int maxCourses;
-  final String categoriesText;
   final Duration loadingDuration;
 
   const LoadingScreen({
     super.key,
-    this.title = 'Rever Verbal',
+    this.title = 'Retrovoz',
     this.subtitle = 'Sonidos en reversa',
-    this.maxCourses = 1004,
-    this.categoriesText = 'efectos y sonidos de prueba...',
     this.loadingDuration = const Duration(seconds: 10),
   });
 
@@ -190,34 +185,16 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
                         const SizedBox(height: 8),
 
-                        // Fila de conteo y descripción
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Recopilando  ',
-                              style: GoogleFonts.poppins(
-                                fontSize: textSize + 3,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.white,
-                                letterSpacing: -1,
-                              ),
-                            ),
-                            CountingAnimation(
-                              endCount: widget.maxCourses,
-                              textSize: textSize,
-                              duration: widget.loadingDuration,
-                            ),
-                            Text(
-                              '  ${widget.categoriesText}',
-                              style: GoogleFonts.poppins(
-                                fontSize: textSize + 3,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.white,
-                                letterSpacing: -1,
-                              ),
-                            ),
-                          ],
+                        // Mensaje de carga de componentes y sonidos
+                        Text(
+                          'Cargando componentes y sonidos...',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                            fontSize: textSize + 2,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                          ),
                         ),
 
                         const SizedBox(height: 12),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rever/features/home/presentation/models/home_audio_state.dart';
 import 'package:rever/features/home/presentation/screens/home_screen.dart';
+import 'package:rever/features/home/presentation/widgets/audio_spectrum_wave.dart';
 import 'package:rever/features/home/presentation/widgets/audio_state_indicator.dart';
 import 'package:rever/features/home/presentation/widgets/microphone_button.dart';
 import 'package:rever/features/home/presentation/widgets/reverse_audio_player_panel.dart';
@@ -33,6 +34,20 @@ void main() {
     expect(find.byType(ThreeDotsIndicator), findsOneWidget);
   });
 
+  testWidgets('AudioSpectrumWave renders and paints spectrum bars', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: AudioSpectrumWave(barColor: Color(0xFF7F1D1D), isActive: true),
+        ),
+      ),
+    );
+
+    expect(find.byType(AudioSpectrumWave), findsOneWidget);
+  });
+
   testWidgets(
     'HomeScreen renders 2 full sections: Comenzar and Grabaciones guardadas',
     (WidgetTester tester) async {
@@ -40,7 +55,7 @@ void main() {
 
       expect(find.text('Comenzar'), findsOneWidget);
       expect(find.text('Grabaciones guardadas'), findsOneWidget);
-      expect(find.text('Rever Verbal'), findsOneWidget);
+      expect(find.text('Retrovoz'), findsOneWidget);
       expect(find.text('Sonidos en reversa'), findsOneWidget);
     },
   );

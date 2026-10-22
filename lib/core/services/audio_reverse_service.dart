@@ -282,7 +282,7 @@ class AudioReverseService {
     // Validar compatibilidad de formato (PCM lineal no comprimido = 1)
     if (audioFormat != 1) {
       throw FormatException(
-        'Formato no compatible ($audioFormat). Rever Verbal procesa audio PCM sin pérdidas (formato 1).',
+        'Formato no compatible ($audioFormat). Retrovoz procesa audio PCM sin pérdidas (formato 1).',
       );
     }
 

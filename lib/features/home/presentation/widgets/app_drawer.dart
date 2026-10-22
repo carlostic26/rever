@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../screens/coming_soon_screen.dart';
 
@@ -73,7 +74,7 @@ class AppDrawer extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Rever Verbal',
+                          'Retrovoz',
                           style: GoogleFonts.poppins(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -100,7 +101,10 @@ class AppDrawer extends StatelessWidget {
             // Opciones de Navegación del Drawer
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 12,
+                ),
                 children: [
                   // 1. Inicio
                   _DrawerItem(
@@ -108,7 +112,9 @@ class AppDrawer extends StatelessWidget {
                     title: 'Inicio',
                     isSelected: true,
                     onTap: () {
-                      Navigator.pop(context); // Cierra el Drawer y permanece en Inicio
+                      Navigator.pop(
+                        context,
+                      ); // Cierra el Drawer y permanece en Inicio
                     },
                   ),
 
@@ -121,7 +127,8 @@ class AppDrawer extends StatelessWidget {
                     onTap: () => _navigateToComingSoon(
                       context,
                       title: 'Mis audios',
-                      description: 'Gestiona, organiza y escucha tus grabaciones anteriores.',
+                      description:
+                          'Gestiona, organiza y escucha tus grabaciones anteriores.',
                       icon: Icons.library_music_rounded,
                     ),
                   ),
@@ -135,7 +142,8 @@ class AppDrawer extends StatelessWidget {
                     onTap: () => _navigateToComingSoon(
                       context,
                       title: 'Favoritos',
-                      description: 'Tus audios invertidos y retos favoritos en un solo lugar.',
+                      description:
+                          'Tus audios invertidos y retos favoritos en un solo lugar.',
                       icon: Icons.favorite_rounded,
                     ),
                   ),
@@ -149,14 +157,18 @@ class AppDrawer extends StatelessWidget {
                     onTap: () => _navigateToComingSoon(
                       context,
                       title: 'Ajustes',
-                      description: 'Configura la calidad de grabación, velocidad de inversión y preferencias.',
+                      description:
+                          'Configura la calidad de grabación, velocidad de inversión y preferencias.',
                       icon: Icons.settings_rounded,
                     ),
                   ),
 
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Divider(color: AppColors.darkSurfaceStrong, thickness: 1),
+                    child: Divider(
+                      color: AppColors.darkSurfaceStrong,
+                      thickness: 1,
+                    ),
                   ),
 
                   // 5. Acerca de
@@ -166,7 +178,8 @@ class AppDrawer extends StatelessWidget {
                     onTap: () => _navigateToComingSoon(
                       context,
                       title: 'Acerca de',
-                      description: 'Rever Verbal v1.0.0\nLa app para escuchar y adivinar palabras y sonidos reproducidos en reversa.',
+                      description:
+                          'Retrovoz v1.0.0\nLa app para escuchar y adivinar palabras y sonidos reproducidos en reversa.',
                       icon: Icons.graphic_eq_rounded,
                     ),
                   ),
@@ -178,7 +191,7 @@ class AppDrawer extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
-                'v1.0.0 • Rever Verbal',
+                'v1.0.0 • Retrovoz',
                 style: GoogleFonts.poppins(
                   fontSize: 11,
                   color: AppColors.darkTextMuted,
@@ -223,7 +236,9 @@ class _DrawerItem extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         leading: Icon(
           icon,
-          color: isSelected ? AppColors.violetAccent : AppColors.darkTextSecondary,
+          color: isSelected
+              ? AppColors.violetAccent
+              : AppColors.darkTextSecondary,
           size: 22,
         ),
         title: Text(
@@ -249,4 +264,3 @@ class _DrawerItem extends StatelessWidget {
     );
   }
 }
-

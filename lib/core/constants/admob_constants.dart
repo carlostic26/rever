@@ -1,6 +1,6 @@
 import '../utils/ads.dart';
 
-/// Constantes para Google AdMob en Rever Verbal.
+/// Constantes para Google AdMob en Retrovoz.
 /// Centraliza la lectura desde .env mediante [ReverAdsIds].
 class AdMobConstants {
   AdMobConstants._();

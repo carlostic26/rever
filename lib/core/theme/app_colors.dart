@@ -10,7 +10,7 @@ class AppColors {
   static const Color darkSurfaceCard = Color(0xFF1A2642);
   static const Color darkSurfaceStrong = Color(0xFF263554);
 
-  // Acentos de Rever Verbal: Violetas, morados y azules
+  // Acentos de Retrovoz: Violetas, morados y azules
   static const Color violetAccent = Color(0xFF8B5CF6);
   static const Color purpleAccent = Color(0xFFA855F7);
   static const Color purpleDeep = Color(0xFF7C3AED);
