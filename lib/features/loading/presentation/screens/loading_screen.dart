@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../controllers/loading_controller.dart';
 import '../widgets/loading_progress_bar.dart';
 
@@ -13,9 +14,10 @@ class LoadingScreen extends StatefulWidget {
 
   const LoadingScreen({
     super.key,
-    this.title = 'Retrovoz',
-    this.subtitle = 'Sonidos en reversa',
-    this.loadingDuration = const Duration(seconds: 10),
+    this.title = 'Retrovoz Challenge',
+    this.subtitle =
+        'Graba tus sonidos, reproducelos en reversa y diviertete adivinando',
+    this.loadingDuration = const Duration(seconds: 7),
   });
 
   @override
@@ -42,48 +44,29 @@ class _LoadingScreenState extends State<LoadingScreen> {
     return Container(
       height: imageHeight * 0.95,
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 206, 206, 206),
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
-      padding: const EdgeInsets.all(1),
-      child: ColorFiltered(
-        colorFilter: const ColorFilter.matrix([
-          1.15,
-          0,
-          0,
-          0,
-          0,
-          0,
-          1.15,
-          0,
-          0,
-          0,
-          0,
-          0,
-          1.15,
-          0,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-        ]),
-        child: Image.asset(
-          'assets/logo_icon.png',
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            return const Padding(
-              padding: EdgeInsets.all(12.0),
-              child: Icon(
-                Icons.school_rounded,
-                size: 40,
-                color: AppColors.darkAccent,
-              ),
-            );
-          },
-        ),
+      child: Image.asset(
+        'assets/logo_actual.png',
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          return const Padding(
+            padding: EdgeInsets.all(12.0),
+            child: Icon(
+              Icons.graphic_eq_rounded,
+              size: 40,
+              color: AppColors.darkAccent,
+            ),
+          );
+        },
       ),
     );
   }
@@ -97,18 +80,20 @@ class _LoadingScreenState extends State<LoadingScreen> {
     final double imageHeight = isLandscape ? height * 0.20 : height * 0.15;
     final double textSize = isLandscape ? 10.0 : 8.0;
 
-    return Scaffold(
-      backgroundColor: AppColors.darkBackground,
-      body: ListenableBuilder(
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: Scaffold(
+        backgroundColor: AppColors.darkBackground,
+        body: ListenableBuilder(
         listenable: _controller,
         builder: (context, _) {
           return Stack(
             children: [
-              // 1. Imagen de fondo con íconos (exacto a Cursin v_31)
+              // 1. Imagen de fondo con íconos
               Positioned.fill(
                 top: height * 0.05,
                 child: Image.asset(
-                  'assets/icon/icons_background.png',
+                  'assets/icon/background_asset_loading.png',
                   fit: BoxFit.contain,
                   alignment: Alignment.topCenter,
                   errorBuilder: (context, error, stackTrace) =>
@@ -116,7 +101,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
                 ),
               ),
 
-              // 2. Fondo degradado oficial de Cursin
+              // 2. Fondo degradado oficial
               Positioned.fill(
                 child: Container(
                   decoration: const BoxDecoration(
@@ -133,127 +118,123 @@ class _LoadingScreenState extends State<LoadingScreen> {
               SafeArea(
                 child: Center(
                   child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(height: height * 0.12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(height: height * 0.08),
 
-                        // Logo con marco estilizado
-                        _buildLogo(imageHeight),
+                          // Logo con marco estilizado
+                          _buildLogo(imageHeight),
 
-                        const SizedBox(height: 12),
+                          const SizedBox(height: 16),
 
-                        // Título con Poppins
-                        Text(
-                          widget.title,
-                          style: GoogleFonts.poppins(
-                            fontSize: 44,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                            letterSpacing: -1,
+                          // Título de la app: Retrovoz Challenge
+                          Text(
+                            widget.title,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: -0.5,
+                            ),
                           ),
-                        ),
 
-                        // Subtítulo con Poppins
-                        Text(
-                          widget.subtitle,
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.blue,
-                            letterSpacing: -1,
+                          SizedBox(height: height * 0.05),
+
+                          // Barra de progreso animada de 7 segundos
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            child: LoadingProgressBar(
+                              width: width * 0.70,
+                              lineHeight: 12,
+                              animationDurationMs:
+                                  widget.loadingDuration.inMilliseconds,
+                              onAnimationEnd: () {
+                                _controller.enableButton();
+                              },
+                            ),
                           ),
-                        ),
 
-                        SizedBox(height: height * 0.06),
+                          const SizedBox(height: 10),
 
-                        // Barra de progreso animada con percent_indicator
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          child: LoadingProgressBar(
-                            width: width * 0.65,
-                            lineHeight: 7,
-                            animationDurationMs:
-                                widget.loadingDuration.inMilliseconds,
-                            progressColor: AppColors.darkAccent,
-                            backgroundColor: AppColors.darkSurfaceStrong,
-                            onAnimationEnd: () {
-                              _controller.enableButton();
-                            },
+                          // Mensaje de carga de componentes y sonidos
+                          Text(
+                            'Cargando componentes y sonidos...',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: textSize + 4,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                              letterSpacing: -0.3,
+                            ),
                           ),
-                        ),
 
-                        const SizedBox(height: 8),
+                          const SizedBox(height: 8),
 
-                        // Mensaje de carga de componentes y sonidos
-                        Text(
-                          'Cargando componentes y sonidos...',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                            fontSize: textSize + 2,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.white,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // Mensaje de estado
-                        Text(
-                          _controller.statusMessage,
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: _controller.isButtonEnabled
-                                ? Colors.cyanAccent
-                                : AppColors.darkTextSecondary,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-
-                        SizedBox(height: height * 0.04),
-
-                        // Botón de Continuar
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(0, 20, 0, 40),
-                          child: TextButton(
-                            onPressed: _controller.isButtonEnabled
-                                ? () => _controller.onContinuePressed(context)
-                                : null,
-                            style: ButtonStyle(
-                              backgroundColor: WidgetStateProperty.all<Color>(
-                                _controller.isButtonEnabled
-                                    ? AppColors.darkAccent
-                                    : AppColors.darkSurfaceStrong,
+                          // Subtítulo descriptivo largo ubicado abajo de cargando componentes y sonidos
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                            child: Text(
+                              widget.subtitle,
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.electricBlue,
+                                letterSpacing: -0.2,
+                                height: 1.35,
                               ),
-                              padding: WidgetStateProperty.all<EdgeInsets>(
-                                const EdgeInsets.symmetric(
-                                  horizontal: 40,
-                                  vertical: 12,
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          SizedBox(height: height * 0.04),
+
+                          // Botón de Continuar (sin anuncio interstitial, navegación directa)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(0, 10, 0, 30),
+                            child: TextButton(
+                              onPressed: _controller.isButtonEnabled
+                                  ? () => _controller.onContinuePressed(context)
+                                  : null,
+                              style: ButtonStyle(
+                                backgroundColor: WidgetStateProperty.all<Color>(
+                                  _controller.isButtonEnabled
+                                      ? AppColors.secondaryGreen
+                                      : const Color(0xFF132738),
+                                ),
+                                padding: WidgetStateProperty.all<EdgeInsets>(
+                                  const EdgeInsets.symmetric(
+                                    horizontal: 42,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                shape: WidgetStateProperty.all<
+                                  RoundedRectangleBorder
+                                >(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                               ),
-                              shape:
-                                  WidgetStateProperty.all<
-                                    RoundedRectangleBorder
-                                  >(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                            ),
-                            child: Text(
-                              'Continuar',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: _controller.isButtonEnabled
-                                    ? Colors.white
-                                    : AppColors.darkTextSecondary,
+                              child: Text(
+                                'Continuar',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: _controller.isButtonEnabled
+                                      ? Colors.white
+                                      : AppColors.darkTextSecondary,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -262,6 +243,6 @@ class _LoadingScreenState extends State<LoadingScreen> {
           );
         },
       ),
-    );
+    ));
   }
 }

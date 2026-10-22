@@ -26,12 +26,19 @@ class ReverApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Retrovoz',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
-      initialRoute: AppRoutes.loading,
-      onGenerateRoute: AppRouter.generateRoute,
+    return ListenableBuilder(
+      listenable: InjectionContainer.themeController,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'Retrovoz Challenge',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: InjectionContainer.themeController.themeMode,
+          initialRoute: AppRoutes.loading,
+          onGenerateRoute: AppRouter.generateRoute,
+        );
+      },
     );
   }
 }

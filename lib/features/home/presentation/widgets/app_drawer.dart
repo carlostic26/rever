@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../screens/coming_soon_screen.dart';
 
@@ -28,8 +30,18 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color drawerBg =
+        isDark ? AppColors.darkBackgroundAlt : AppColors.lightBackgroundAlt;
+    final Color surfaceColor =
+        isDark ? AppColors.darkSurface : AppColors.lightSurfaceCard;
+    final Color borderColor =
+        isDark ? AppColors.darkSurfaceStrong : AppColors.lightSurfaceStrong;
+    final Color textPrimary =
+        isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+
     return Drawer(
-      backgroundColor: AppColors.darkBackgroundAlt,
+      backgroundColor: drawerBg,
       child: SafeArea(
         child: Column(
           children: [
@@ -38,10 +50,10 @@ class AppDrawer extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
               decoration: BoxDecoration(
-                color: AppColors.darkSurface.withValues(alpha: 0.6),
-                border: const Border(
+                color: surfaceColor.withValues(alpha: 0.8),
+                border: Border(
                   bottom: BorderSide(
-                    color: AppColors.darkSurfaceStrong,
+                    color: borderColor,
                     width: 1,
                   ),
                 ),
@@ -56,7 +68,7 @@ class AppDrawer extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.violetAccent.withValues(alpha: 0.35),
+                          color: AppColors.primaryBlue.withValues(alpha: 0.35),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -74,11 +86,11 @@ class AppDrawer extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Retrovoz',
+                          'Retrovoz Challenge',
                           style: GoogleFonts.poppins(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.darkTextPrimary,
+                            color: textPrimary,
                             letterSpacing: -0.5,
                           ),
                         ),
@@ -87,8 +99,8 @@ class AppDrawer extends StatelessWidget {
                           'Sonidos en reversa',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.electricBlue,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.secondaryGreen,
                           ),
                         ),
                       ],
@@ -112,9 +124,7 @@ class AppDrawer extends StatelessWidget {
                     title: 'Inicio',
                     isSelected: true,
                     onTap: () {
-                      Navigator.pop(
-                        context,
-                      ); // Cierra el Drawer y permanece en Inicio
+                      Navigator.pop(context);
                     },
                   ),
 
@@ -163,15 +173,91 @@ class AppDrawer extends StatelessWidget {
                     ),
                   ),
 
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Divider(
-                      color: AppColors.darkSurfaceStrong,
+                      color: borderColor,
                       thickness: 1,
                     ),
                   ),
 
-                  // 5. Acerca de
+                  // Switch de Tema (Claro / Oscuro)
+                  ListenableBuilder(
+                    listenable: InjectionContainer.themeController,
+                    builder: (context, _) {
+                      final bool isDarkActive =
+                          InjectionContainer.themeController.isDarkMode;
+                      return Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 4,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.darkSurface.withValues(alpha: 0.5)
+                              : AppColors.lightSurfaceCard,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: borderColor.withValues(alpha: 0.6),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              isDarkActive
+                                  ? Icons.dark_mode_rounded
+                                  : Icons.light_mode_rounded,
+                              color: isDarkActive
+                                  ? AppColors.electricBlue
+                                  : const Color(0xFFF59E0B),
+                              size: 22,
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Text(
+                                isDarkActive ? 'Modo Oscuro' : 'Modo Claro',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: textPrimary,
+                                ),
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: isDarkActive,
+                              activeThumbColor: AppColors.secondaryGreen,
+                              activeTrackColor: AppColors.primaryBlue
+                                  .withValues(alpha: 0.4),
+                              onChanged: (val) {
+                                InjectionContainer.themeController
+                                    .toggleTheme(val);
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  // 5. Política de Privacidad
+                  _DrawerItem(
+                    icon: Icons.privacy_tip_outlined,
+                    title: 'Política de Privacidad',
+                    onTap: () {
+                      Navigator.pop(context); // Cierra el Drawer
+                      Navigator.pushNamed(context, AppRoutes.privacyPolicy);
+                    },
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  // 6. Acerca de
                   _DrawerItem(
                     icon: Icons.info_outline_rounded,
                     title: 'Acerca de',
@@ -179,7 +265,7 @@ class AppDrawer extends StatelessWidget {
                       context,
                       title: 'Acerca de',
                       description:
-                          'Retrovoz v1.0.0\nLa app para escuchar y adivinar palabras y sonidos reproducidos en reversa.',
+                          'Retrovoz Challenge v1.0.0\nLa app para escuchar y adivinar palabras y sonidos reproducidos en reversa.',
                       icon: Icons.graphic_eq_rounded,
                     ),
                   ),
@@ -191,10 +277,12 @@ class AppDrawer extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
-                'v1.0.0 • Retrovoz',
+                'v1.0.0 • Retrovoz Challenge',
                 style: GoogleFonts.poppins(
                   fontSize: 11,
-                  color: AppColors.darkTextMuted,
+                  color: isDark
+                      ? AppColors.darkTextMuted
+                      : AppColors.lightTextMuted,
                 ),
               ),
             ),
@@ -220,15 +308,20 @@ class _DrawerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color activeColor = AppColors.primaryBlue;
+    final Color inactiveText =
+        isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+
     return Container(
       decoration: BoxDecoration(
         color: isSelected
-            ? AppColors.violetAccent.withValues(alpha: 0.15)
+            ? activeColor.withValues(alpha: 0.12)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isSelected
-              ? AppColors.violetAccent.withValues(alpha: 0.4)
+              ? activeColor.withValues(alpha: 0.35)
               : Colors.transparent,
         ),
       ),
@@ -236,9 +329,7 @@ class _DrawerItem extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         leading: Icon(
           icon,
-          color: isSelected
-              ? AppColors.violetAccent
-              : AppColors.darkTextSecondary,
+          color: isSelected ? activeColor : inactiveText,
           size: 22,
         ),
         title: Text(
@@ -246,16 +337,18 @@ class _DrawerItem extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            color: isSelected ? Colors.white : AppColors.darkTextSecondary,
+            color: isSelected
+                ? (isDark ? Colors.white : AppColors.primaryBlue)
+                : inactiveText,
           ),
         ),
         trailing: isSelected
             ? Container(
                 width: 6,
                 height: 6,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.violetAccent,
+                  color: activeColor,
                 ),
               )
             : null,

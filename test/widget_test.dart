@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rever/core/di/injection_container.dart';
+import 'package:rever/core/theme/theme_controller.dart';
 import 'package:rever/features/home/presentation/models/home_audio_state.dart';
 import 'package:rever/features/home/presentation/screens/home_screen.dart';
+import 'package:rever/features/home/presentation/widgets/app_drawer.dart';
 import 'package:rever/features/home/presentation/widgets/audio_spectrum_wave.dart';
 import 'package:rever/features/home/presentation/widgets/audio_state_indicator.dart';
 import 'package:rever/features/home/presentation/widgets/microphone_button.dart';
 import 'package:rever/features/home/presentation/widgets/reverse_audio_player_panel.dart';
 import 'package:rever/features/home/presentation/widgets/three_dots_indicator.dart';
 import 'package:rever/features/loading/presentation/widgets/counting_animation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -55,7 +59,7 @@ void main() {
 
       expect(find.text('Comenzar'), findsOneWidget);
       expect(find.text('Grabaciones guardadas'), findsOneWidget);
-      expect(find.text('Retrovoz'), findsOneWidget);
+      expect(find.text('Retrovoz Challenge'), findsOneWidget);
       expect(find.text('Sonidos en reversa'), findsOneWidget);
     },
   );
@@ -182,6 +186,32 @@ void main() {
       );
 
       expect(find.byIcon(Icons.pause_rounded), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'AppDrawer renders navigation options, privacy policy, and theme switch',
+    (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({});
+      InjectionContainer.themeController = ThemeController();
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            drawer: AppDrawer(),
+            body: Text('Test Body'),
+          ),
+        ),
+      );
+
+      final scaffoldState = tester.state<ScaffoldState>(find.byType(Scaffold));
+      scaffoldState.openDrawer();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Retrovoz Challenge'), findsOneWidget);
+      expect(find.text('Modo Claro'), findsOneWidget);
+      expect(find.text('Política de Privacidad'), findsOneWidget);
+      expect(find.byType(Switch), findsOneWidget);
     },
   );
 }

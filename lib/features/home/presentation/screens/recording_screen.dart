@@ -153,7 +153,7 @@ class _RecordingScreenState extends State<RecordingScreen>
           ],
         ),
         content: Text(
-          'Retrovoz requiere acceso al micrófono para grabar tu voz. '
+          'Retrovoz Challenge requiere acceso al micrófono para grabar tu voz. '
           'Por favor, habilítalo manualmente desde los ajustes de la aplicación.',
           style: GoogleFonts.poppins(
             fontSize: 13,
@@ -454,18 +454,23 @@ class _RecordingScreenState extends State<RecordingScreen>
     final bool isProcessing = _audioState.isProcessing;
     final bool hasOriginal = _audioState.audioPath != null;
     final bool hasReversed = _audioState.hasReversedAudio;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color bgColor =
+        isDark ? AppColors.darkBackground : AppColors.lightBackground;
+    final Color textPrimary =
+        isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: bgColor,
       drawer: const AppDrawer(),
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: bgColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.menu_rounded,
-            color: AppColors.darkTextPrimary,
+            color: textPrimary,
             size: 26,
           ),
           tooltip: 'Abrir menú',
@@ -481,17 +486,17 @@ class _RecordingScreenState extends State<RecordingScreen>
               ),
               child: const Icon(
                 Icons.graphic_eq_rounded,
-                color: AppColors.violetAccent,
+                color: AppColors.primaryBlue,
                 size: 20,
               ),
             ),
             const SizedBox(width: 10),
             Text(
-              'Estudio Retrovoz',
+              'Estudio Retrovoz Challenge',
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w700,
                 fontSize: 17,
-                color: AppColors.darkTextPrimary,
+                color: textPrimary,
                 letterSpacing: -0.5,
               ),
             ),
@@ -1102,8 +1107,8 @@ class _RecordingScreenState extends State<RecordingScreen>
                 alignment: Alignment.center,
                 width: _bannerAd!.size.width.toDouble(),
                 height: _bannerAd!.size.height.toDouble(),
-                decoration: const BoxDecoration(
-                  color: AppColors.darkBackground,
+                decoration: BoxDecoration(
+                  color: bgColor,
                 ),
                 child: AdWidget(ad: _bannerAd!),
               ),

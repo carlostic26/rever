@@ -10,12 +10,14 @@ import '../../features/loading/presentation/controllers/loading_controller.dart'
 import '../services/audio_player_service.dart';
 import '../services/audio_recording_service.dart';
 import '../services/audio_reverse_service.dart';
+import '../theme/theme_controller.dart';
 
 /// Contenedor de Inyección de Dependencias (Service Locator / DI)
 /// siguiendo los principios de Clean Architecture.
 class InjectionContainer {
   InjectionContainer._();
 
+  static late final ThemeController themeController;
   static late final AdMobRemoteDataSource adMobRemoteDataSource;
   static late final AdRepository adRepository;
 
@@ -27,6 +29,9 @@ class InjectionContainer {
   static late final ShowInterstitialAdUseCase showInterstitialAdUseCase;
 
   static Future<void> init() async {
+    // 0. Theme Controller (Light por defecto con soporte Dark)
+    themeController = ThemeController();
+
     // 1. DataSources
     adMobRemoteDataSource = AdMobRemoteDataSourceImpl();
 
@@ -46,8 +51,7 @@ class InjectionContainer {
     return LoadingController(
       initializeAdsUseCase: initializeAdsUseCase,
       loadAppOpenAdUseCase: loadAppOpenAdUseCase,
-      loadInterstitialAdUseCase: loadInterstitialAdUseCase,
-      showInterstitialAdUseCase: showInterstitialAdUseCase,
+      showAppOpenAdUseCase: showAppOpenAdUseCase,
     );
   }
 

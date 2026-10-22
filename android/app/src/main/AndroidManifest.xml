@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
 
     <application
-        android:label="Retrovoz"
+        android:label="Retrovoz Challenge"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:largeHeap="true">
@@ -24,6 +24,7 @@
 
         <activity
             android:name=".MainActivity"
+            android:label="Retrovoz Challenge"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""

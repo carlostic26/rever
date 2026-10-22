@@ -5,4 +5,5 @@ class AppRoutes {
   static const String loading = '/';
   static const String home = '/home';
   static const String recording = '/recording';
+  static const String privacyPolicy = '/privacy-policy';
 }

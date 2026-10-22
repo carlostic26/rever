@@ -12,18 +12,26 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final Color bgColor =
+        isDark ? AppColors.darkBackground : AppColors.lightBackground;
+    final Color textColor =
+        isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+    final Color textSecondary =
+        isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
 
     return Scaffold(
       key: scaffoldKey,
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: bgColor,
       drawer: const AppDrawer(),
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: bgColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.menu_rounded,
-            color: AppColors.darkTextPrimary,
+            color: textColor,
             size: 26,
           ),
           tooltip: 'Abrir menú',
@@ -39,7 +47,7 @@ class HomeScreen extends StatelessWidget {
               ),
               child: const Icon(
                 Icons.graphic_eq_rounded,
-                color: AppColors.violetAccent,
+                color: AppColors.primaryBlue,
                 size: 20,
               ),
             ),
@@ -48,11 +56,11 @@ class HomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Retrovoz',
+                  'Retrovoz Challenge',
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w700,
                     fontSize: 18,
-                    color: AppColors.darkTextPrimary,
+                    color: textColor,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -60,8 +68,8 @@ class HomeScreen extends StatelessWidget {
                   'Sonidos en reversa',
                   style: GoogleFonts.poppins(
                     fontSize: 11,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.electricBlue,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.secondaryGreen,
                   ),
                 ),
               ],
@@ -75,7 +83,7 @@ class HomeScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
           child: Column(
             children: [
-              // 1. SECCIÓN SUPERIOR: "Comenzar" (Lleva a la pantalla de grabación y lógica)
+              // 1. SECCIÓN SUPERIOR: "Comenzar" (Prevaleciendo Azul y Verde)
               Expanded(
                 flex: 1,
                 child: GestureDetector(
@@ -87,7 +95,7 @@ class HomeScreen extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
+                        colors: [AppColors.primaryBlue, AppColors.secondaryGreen],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -98,9 +106,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(
-                            0xFF8B5CF6,
-                          ).withValues(alpha: 0.35),
+                          color: AppColors.primaryBlue.withValues(alpha: 0.35),
                           blurRadius: 18,
                           offset: const Offset(0, 8),
                         ),
@@ -142,7 +148,7 @@ class HomeScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                'Graba tu voz y escúchala al revés',
+                                'Graba tu voz e inviértela al instante',
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.poppins(
                                   fontSize: 14,
@@ -153,12 +159,15 @@ class HomeScreen extends StatelessWidget {
                               const SizedBox(height: 16),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
+                                  horizontal: 20,
                                   vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.25),
+                                  color: Colors.white.withValues(alpha: 0.22),
                                   borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.35),
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -209,19 +218,25 @@ class HomeScreen extends StatelessWidget {
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                      gradient: LinearGradient(
+                        colors: isDark
+                            ? const [Color(0xFF0D1B2A), Color(0xFF162B3F)]
+                            : const [Color(0xFFFFFFFF), Color(0xFFF8FAFC)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(28),
                       border: Border.all(
-                        color: AppColors.darkSurfaceStrong,
+                        color: isDark
+                            ? AppColors.darkSurfaceStrong
+                            : AppColors.lightSurfaceStrong,
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.35),
+                          color: isDark
+                              ? Colors.black.withValues(alpha: 0.35)
+                              : Colors.black.withValues(alpha: 0.06),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),
@@ -242,14 +257,14 @@ class HomeScreen extends StatelessWidget {
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: AppColors.electricBlue.withValues(
+                                  color: AppColors.primaryBlue.withValues(
                                     alpha: 0.15,
                                   ),
                                 ),
                                 child: const Icon(
                                   Icons.folder_special_rounded,
                                   size: 50,
-                                  color: AppColors.electricBlue,
+                                  color: AppColors.primaryBlue,
                                 ),
                               ),
                               const SizedBox(height: 16),
@@ -259,7 +274,7 @@ class HomeScreen extends StatelessWidget {
                                 style: GoogleFonts.poppins(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.darkTextPrimary,
+                                  color: textColor,
                                   letterSpacing: -0.5,
                                 ),
                               ),
@@ -270,7 +285,7 @@ class HomeScreen extends StatelessWidget {
                                 style: GoogleFonts.poppins(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w400,
-                                  color: AppColors.darkTextSecondary,
+                                  color: textSecondary,
                                 ),
                               ),
                               const SizedBox(height: 16),
@@ -280,9 +295,11 @@ class HomeScreen extends StatelessWidget {
                                   vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.darkSurfaceStrong.withValues(
-                                    alpha: 0.6,
-                                  ),
+                                  color: isDark
+                                      ? AppColors.darkSurfaceStrong.withValues(
+                                          alpha: 0.6,
+                                        )
+                                      : AppColors.lightSurfaceStrong,
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Row(
@@ -293,14 +310,14 @@ class HomeScreen extends StatelessWidget {
                                       style: GoogleFonts.poppins(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w500,
-                                        color: AppColors.electricBlue,
+                                        color: AppColors.primaryBlue,
                                       ),
                                     ),
                                     const SizedBox(width: 6),
                                     const Icon(
                                       Icons.arrow_forward_rounded,
                                       size: 16,
-                                      color: AppColors.electricBlue,
+                                      color: AppColors.primaryBlue,
                                     ),
                                   ],
                                 ),

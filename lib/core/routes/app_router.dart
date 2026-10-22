@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/home/presentation/screens/privacy_policy_screen.dart';
 import '../../features/home/presentation/screens/recording_screen.dart';
 import '../../features/loading/presentation/screens/loading_screen.dart';
 import 'app_routes.dart';
@@ -29,6 +30,15 @@ class AppRouter {
       case AppRoutes.recording:
         return MaterialPageRoute(
           builder: (_) => const RecordingScreen(),
+          settings: settings,
+        );
+
+      case AppRoutes.privacyPolicy:
+        final url = settings.arguments as String?;
+        return MaterialPageRoute(
+          builder: (_) => url != null
+              ? PrivacyPolicyScreen(url: url)
+              : const PrivacyPolicyScreen(),
           settings: settings,
         );
 
