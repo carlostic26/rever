@@ -78,7 +78,6 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
     final bool isLandscape = width > height;
     final double imageHeight = isLandscape ? height * 0.20 : height * 0.15;
-    final double textSize = isLandscape ? 10.0 : 8.0;
 
     return Theme(
       data: AppTheme.darkTheme,
@@ -158,34 +157,20 @@ class _LoadingScreenState extends State<LoadingScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 14),
 
-                          // Mensaje de carga de componentes y sonidos
-                          Text(
-                            'Cargando componentes y sonidos...',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.poppins(
-                              fontSize: textSize + 4,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white,
-                              letterSpacing: -0.3,
-                            ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          // Subtítulo descriptivo largo ubicado abajo de cargando componentes y sonidos
+                          // Subtítulo descriptivo
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                            padding: const EdgeInsets.symmetric(horizontal: 20.0),
                             child: Text(
                               widget.subtitle,
                               textAlign: TextAlign.center,
                               style: GoogleFonts.poppins(
-                                fontSize: 13,
+                                fontSize: 13.5,
                                 fontWeight: FontWeight.w400,
-                                color: AppColors.electricBlue,
+                                color: const Color(0xFF38BDF8),
                                 letterSpacing: -0.2,
-                                height: 1.35,
+                                height: 1.4,
                               ),
                             ),
                           ),

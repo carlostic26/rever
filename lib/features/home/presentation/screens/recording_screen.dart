@@ -32,10 +32,12 @@ class _RecordingScreenState extends State<RecordingScreen>
   // Servicios
   late final AudioRecordingService _recordingService;
   late final AudioReverseService _reverseService;
-  late final AudioPlayerService _playerService;
+  late final AudioPlayerService _originalPlayerService;
+  late final AudioPlayerService _reversePlayerService;
 
   // Suscripciones de reproducción
-  StreamSubscription<PlayerState>? _playerStateSubscription;
+  StreamSubscription<PlayerState>? _originalPlayerStateSub;
+  StreamSubscription<PlayerState>? _reversePlayerStateSub;
 
   // Estado del flujo de audio
   HomeAudioState _audioState = HomeAudioState.initial;
@@ -49,21 +51,29 @@ class _RecordingScreenState extends State<RecordingScreen>
   Timer? _recordingTimer;
   Duration _recordingDuration = Duration.zero;
 
+  // Contador de grabaciones de voz válidas (> 2 segundos) para anuncio intersticial
+  int _validRecordingsCount = 0;
+
   // Animación shrink para containers de reproducción durante el procesamiento
   late final AnimationController _shrinkController;
   late final Animation<double> _shrinkScale;
   late final Animation<double> _shrinkOpacity;
 
-  // Banner Ad de AdMob para la pantalla de grabación
+  // Banner Ad adaptativo de AdMob para la pantalla de grabación
   BannerAd? _bannerAd;
   bool _isBannerLoaded = false;
+  bool _isLoadingBanner = false;
 
   @override
   void initState() {
     super.initState();
     _recordingService = InjectionContainer.createAudioRecordingService();
     _reverseService = InjectionContainer.createAudioReverseService();
-    _playerService = InjectionContainer.createAudioPlayerService();
+    _originalPlayerService = InjectionContainer.createAudioPlayerService();
+    _reversePlayerService = InjectionContainer.createAudioPlayerService();
+
+    // Precargar Interstitial Ad para que esté listo cuando se requiera
+    unawaited(InjectionContainer.loadInterstitialAdUseCase());
 
     // Animación shrink (contracción y opacidad/transparencia) mientras se procesa el audio
     _shrinkController = AnimationController(
@@ -78,11 +88,18 @@ class _RecordingScreenState extends State<RecordingScreen>
     );
 
     _setupPlayerListeners();
-    _loadBannerAd();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_bannerAd == null && !_isLoadingBanner) {
+      _loadAdaptiveBannerAd();
+    }
   }
 
   void _setupPlayerListeners() {
-    _playerStateSubscription = _playerService.playerStateStream.listen((
+    _originalPlayerStateSub = _originalPlayerService.playerStateStream.listen((
       playerState,
     ) {
       if (!mounted) return;
@@ -91,17 +108,53 @@ class _RecordingScreenState extends State<RecordingScreen>
           playerState.processingState == ProcessingState.completed;
 
       if (!isPlaying || isCompleted) {
-        setState(() {
-          _currentPlaying = CurrentlyPlaying.none;
-        });
+        if (_currentPlaying == CurrentlyPlaying.original) {
+          setState(() {
+            _currentPlaying = CurrentlyPlaying.none;
+          });
+        }
+      }
+    });
+
+    _reversePlayerStateSub = _reversePlayerService.playerStateStream.listen((
+      playerState,
+    ) {
+      if (!mounted) return;
+      final bool isPlaying = playerState.playing;
+      final bool isCompleted =
+          playerState.processingState == ProcessingState.completed;
+
+      if (!isPlaying || isCompleted) {
+        if (_currentPlaying == CurrentlyPlaying.reverse) {
+          setState(() {
+            _currentPlaying = CurrentlyPlaying.none;
+          });
+        }
       }
     });
   }
 
-  void _loadBannerAd() {
+  Future<void> _loadAdaptiveBannerAd() async {
+    _isLoadingBanner = true;
+    final int width = MediaQuery.of(context).size.width.truncate();
+
+    // 1. Obtener tamaño adaptativo optimizado según ancho y orientación
+    AnchoredAdaptiveBannerAdSize? adaptiveSize;
+    try {
+      adaptiveSize =
+          await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(width);
+    } catch (e) {
+      debugPrint(
+        '[RecordingScreen] Error calculando tamaño de banner adaptativo: $e',
+      );
+    }
+
+    if (!mounted) return;
+
+    // 2. Instanciar y cargar el BannerAd con la medida exacta recibida
     _bannerAd = BannerAd(
       adUnitId: AdMobConstants.bannerAdUnitId,
-      size: AdSize.banner,
+      size: adaptiveSize ?? AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (ad) {
@@ -112,21 +165,30 @@ class _RecordingScreenState extends State<RecordingScreen>
           }
         },
         onAdFailedToLoad: (ad, error) {
-          debugPrint('[RecordingScreen] Error cargando BannerAd: $error');
+          debugPrint(
+            '[RecordingScreen] Error cargando BannerAd adaptativo: $error',
+          );
           ad.dispose();
-          _bannerAd = null;
+          if (mounted) {
+            setState(() {
+              _bannerAd = null;
+              _isBannerLoaded = false;
+            });
+          }
         },
       ),
     );
-    _bannerAd?.load();
+    await _bannerAd?.load();
   }
 
   @override
   void dispose() {
-    _playerStateSubscription?.cancel();
+    _originalPlayerStateSub?.cancel();
+    _reversePlayerStateSub?.cancel();
     _recordingTimer?.cancel();
     _shrinkController.dispose();
-    _playerService.dispose();
+    _originalPlayerService.dispose();
+    _reversePlayerService.dispose();
     _recordingService.dispose();
     _bannerAd?.dispose();
     super.dispose();
@@ -193,14 +255,113 @@ class _RecordingScreenState extends State<RecordingScreen>
     );
   }
 
+  void _showRecordFirstMessage() {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Primero mantén presionado para grabar',
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        backgroundColor: AppColors.darkSurfaceCard,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showSupportDialog() {
+    if (!mounted) return;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        final bool isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor:
+              isDark ? AppColors.darkSurfaceCard : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              const Icon(
+                Icons.favorite_rounded,
+                color: AppColors.secondaryGreen,
+                size: 26,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '¿Te está gustando Retrovoz Challenge?',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.lightTextPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Apóyanos viendo un corto anuncio para continuar',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
+              height: 1.4,
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                InjectionContainer.showInterstitialAdUseCase(
+                  onDismissed: () {
+                    unawaited(InjectionContainer.loadInterstitialAdUseCase());
+                  },
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryBlue,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'Continuar',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // Gesto: Iniciar grabación en Container 1 (inmediato al tocar)
   Future<void> _handlePointerDown(PointerDownEvent event) async {
     // Si se está procesando audio, bloquear cualquier interacción
     if (_audioState.isProcessing) return;
 
-    // Si algún reproductor está activo, detenerlo
+    // Si algún reproductor está activo, detenerlo inmediatamente
     if (_currentPlaying != CurrentlyPlaying.none) {
-      await _playerService.stopAndRelease();
+      unawaited(_originalPlayerService.pause());
+      unawaited(_reversePlayerService.pause());
       setState(() {
         _currentPlaying = CurrentlyPlaying.none;
       });
@@ -334,13 +495,14 @@ class _RecordingScreenState extends State<RecordingScreen>
 
     if (recordResult.isSuccess && recordResult.filePath != null) {
       // Activar inmediatamente:
-      // 1. Container 1 muestra animación de procesamiento con 3 puntos
-      // 2. Containers 2 y 3 se bloquean e inician animación shrink
+      // 1. Container 1 muestra animación de procesamiento con 3 puntos (en color púrpura)
+      // 2. Containers 2 y 3 permanecen totalmente bloqueados e inician animación shrink
       setState(() {
         _audioState = HomeAudioState(
           status: AudioSessionStatus.processing,
           statusText: 'Invirtiendo audio...',
-          audioPath: recordResult.filePath,
+          audioPath: null,
+          reversedAudioPath: null,
           recordedDuration: recordResult.duration,
         );
       });
@@ -359,22 +521,60 @@ class _RecordingScreenState extends State<RecordingScreen>
       _shrinkController.reset();
 
       if (reverseResult.isSuccess && reverseResult.reversedPath != null) {
-        setState(() {
-          _audioState = HomeAudioState(
-            status: AudioSessionStatus.ready,
-            statusText: '¡Audio invertido listo!',
-            audioPath: recordResult.filePath,
-            reversedAudioPath: reverseResult.reversedPath,
-            recordedDuration:
-                reverseResult.metadata?.duration ?? recordResult.duration,
-          );
-        });
+        final String origPath = recordResult.filePath!;
+        final String revPath = reverseResult.reversedPath!;
+
+        try {
+          // Precargamos ambos reproductores para garantizar reproducción y pausa instantánea
+          await Future.wait([
+            _originalPlayerService.loadAudioFile(origPath),
+            _reversePlayerService.loadAudioFile(revPath),
+          ]);
+
+          if (!mounted) return;
+
+          final Duration validDuration =
+              reverseResult.metadata?.duration ?? recordResult.duration;
+
+          // Solo ahora que ambos audios están listos y cargados, habilitamos los botones
+          setState(() {
+            _audioState = HomeAudioState(
+              status: AudioSessionStatus.ready,
+              statusText: '¡Audios listos!',
+              audioPath: origPath,
+              reversedAudioPath: revPath,
+              recordedDuration: validDuration,
+            );
+          });
+
+          // Contabilizar grabación válida de voz mayor a 2 segundos
+          if (validDuration > const Duration(seconds: 2)) {
+            _validRecordingsCount++;
+            if (_validRecordingsCount % 3 == 0) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  _showSupportDialog();
+                }
+              });
+            }
+          }
+        } catch (e) {
+          debugPrint('[RecordingScreen] Error precargando audios: $e');
+          if (mounted) {
+            setState(() {
+              _audioState = HomeAudioState(
+                status: AudioSessionStatus.error,
+                statusText: 'Error al preparar audio',
+                recordedDuration: recordResult.duration,
+              );
+            });
+          }
+        }
       } else {
         setState(() {
           _audioState = HomeAudioState(
             status: AudioSessionStatus.error,
             statusText: 'Error al procesar reverso',
-            audioPath: recordResult.filePath,
             recordedDuration: recordResult.duration,
           );
         });
@@ -388,57 +588,61 @@ class _RecordingScreenState extends State<RecordingScreen>
     }
   }
 
-  // Reproducir/pausar audio normal (Container 2 - Azul)
+  // Reproducir/pausar audio normal de forma inmediata (Container 2 - Azul)
   Future<void> _togglePlayOriginal() async {
-    if (_audioState.isProcessing) return;
-    final String? originalPath = _audioState.audioPath;
-    if (originalPath == null) return;
-
+    if (!_audioState.isReady) return;
     try {
       if (_currentPlaying == CurrentlyPlaying.original) {
-        await _playerService.pause();
         setState(() {
           _currentPlaying = CurrentlyPlaying.none;
         });
+        await _originalPlayerService.pause();
       } else {
         if (_currentPlaying == CurrentlyPlaying.reverse) {
-          await _playerService.stopAndRelease();
+          unawaited(_reversePlayerService.pause());
+          unawaited(_reversePlayerService.seek(Duration.zero));
         }
-        await _playerService.loadAudioFile(originalPath);
-        await _playerService.play();
         setState(() {
           _currentPlaying = CurrentlyPlaying.original;
         });
+        await _originalPlayerService.play();
       }
     } catch (e) {
       debugPrint('[RecordingScreen] Error reproduciendo original: $e');
-    }
-  }
-
-  // Reproducir/pausar audio en reversa (Container 3 - Verde)
-  Future<void> _togglePlayReverse() async {
-    if (_audioState.isProcessing) return;
-    final String? reversedPath = _audioState.reversedAudioPath;
-    if (reversedPath == null) return;
-
-    try {
-      if (_currentPlaying == CurrentlyPlaying.reverse) {
-        await _playerService.pause();
+      if (mounted) {
         setState(() {
           _currentPlaying = CurrentlyPlaying.none;
         });
+      }
+    }
+  }
+
+  // Reproducir/pausar audio en reversa de forma inmediata (Container 3 - Verde)
+  Future<void> _togglePlayReverse() async {
+    if (!_audioState.isReady) return;
+    try {
+      if (_currentPlaying == CurrentlyPlaying.reverse) {
+        setState(() {
+          _currentPlaying = CurrentlyPlaying.none;
+        });
+        await _reversePlayerService.pause();
       } else {
         if (_currentPlaying == CurrentlyPlaying.original) {
-          await _playerService.stopAndRelease();
+          unawaited(_originalPlayerService.pause());
+          unawaited(_originalPlayerService.seek(Duration.zero));
         }
-        await _playerService.loadAudioFile(reversedPath);
-        await _playerService.play();
         setState(() {
           _currentPlaying = CurrentlyPlaying.reverse;
         });
+        await _reversePlayerService.play();
       }
     } catch (e) {
       debugPrint('[RecordingScreen] Error reproduciendo reverso: $e');
+      if (mounted) {
+        setState(() {
+          _currentPlaying = CurrentlyPlaying.none;
+        });
+      }
     }
   }
 
@@ -452,8 +656,13 @@ class _RecordingScreenState extends State<RecordingScreen>
   Widget build(BuildContext context) {
     final bool isRecording = _audioState.isRecording;
     final bool isProcessing = _audioState.isProcessing;
-    final bool hasOriginal = _audioState.audioPath != null;
-    final bool hasReversed = _audioState.hasReversedAudio;
+    // Solo se habilitan cuando estemos 100% seguros de poder reproducir al derecho y al revés
+    final bool isAudiosReady = !isProcessing &&
+        _audioState.isReady &&
+        _audioState.audioPath != null &&
+        _audioState.reversedAudioPath != null;
+    final bool hasOriginal = isAudiosReady;
+    final bool hasReversed = isAudiosReady;
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final Color bgColor =
         isDark ? AppColors.darkBackground : AppColors.lightBackground;
@@ -492,7 +701,7 @@ class _RecordingScreenState extends State<RecordingScreen>
             ),
             const SizedBox(width: 10),
             Text(
-              'Estudio Retrovoz Challenge',
+              'Estudio Retrovoz',
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w700,
                 fontSize: 17,
@@ -504,23 +713,19 @@ class _RecordingScreenState extends State<RecordingScreen>
         ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Column con 3 children: 1. Rojo (grabar), 2. Azul (reproducir normal), 3. Verde (reproducir reverso)
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 12.0,
-                ),
-                child: AnimatedBuilder(
-                  animation: _shrinkController,
-                  builder: (context, _) {
-                    return Column(
-                      children: [
-                        // 1. CONTAINER 1 (ROJO): Botón de Grabación (Tocar para grabar / 3 puntos al soltar)
-                        Expanded(
-                          flex: 1,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16.0,
+            vertical: 12.0,
+          ),
+          child: AnimatedBuilder(
+            animation: _shrinkController,
+            builder: (context, _) {
+              return Column(
+                children: [
+                  // 1. CONTAINER 1: Botón de Grabación (Púrpura cuando está en reposo/procesando, Rojo únicamente al grabar)
+                  Expanded(
+                    flex: 1,
                           child: AbsorbPointer(
                             absorbing: isProcessing,
                             child: Listener(
@@ -545,16 +750,16 @@ class _RecordingScreenState extends State<RecordingScreen>
                                       : (isProcessing
                                             ? const LinearGradient(
                                                 colors: [
-                                                  Color(0xFF991B1B),
-                                                  Color(0xFF7F1D1D),
+                                                  Color(0xFF7C3AED),
+                                                  Color(0xFF5B21B6),
                                                 ],
                                                 begin: Alignment.topLeft,
                                                 end: Alignment.bottomRight,
                                               )
                                             : const LinearGradient(
                                                 colors: [
-                                                  Color(0xFFEF4444),
-                                                  Color(0xFFDC2626),
+                                                  Color(0xFF8B5CF6),
+                                                  Color(0xFF6D28D9),
                                                 ],
                                                 begin: Alignment.topLeft,
                                                 end: Alignment.bottomRight,
@@ -562,9 +767,13 @@ class _RecordingScreenState extends State<RecordingScreen>
                                   borderRadius: BorderRadius.circular(24),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFFDC2626).withValues(
-                                        alpha: isRecording ? 0.45 : 0.3,
-                                      ),
+                                      color: isRecording
+                                          ? const Color(0xFFDC2626).withValues(
+                                              alpha: 0.45,
+                                            )
+                                          : const Color(0xFF7C3AED).withValues(
+                                              alpha: 0.35,
+                                            ),
                                       blurRadius: isRecording ? 20 : 12,
                                       spreadRadius: isRecording ? 3 : 1,
                                     ),
@@ -580,16 +789,20 @@ class _RecordingScreenState extends State<RecordingScreen>
                                   borderRadius: BorderRadius.circular(24),
                                   child: Stack(
                                     children: [
-                                      // Espectro de audio animado en la base (color rojo más oscuro)
+                                      // Espectro de audio animado en la base (rojo al grabar, púrpura profundo en reposo)
                                       Positioned(
                                         left: 8,
                                         right: 8,
                                         bottom: 0,
                                         height: 38,
                                         child: AudioSpectrumWave(
-                                          barColor: const Color(
-                                            0xFF7F1D1D,
-                                          ).withValues(alpha: 0.70),
+                                          barColor: isRecording
+                                              ? const Color(
+                                                  0xFF7F1D1D,
+                                                ).withValues(alpha: 0.70)
+                                              : const Color(
+                                                  0xFF4C1D95,
+                                                ).withValues(alpha: 0.70),
                                           isActive: isRecording,
                                         ),
                                       ),
@@ -733,15 +946,18 @@ class _RecordingScreenState extends State<RecordingScreen>
                         Expanded(
                           flex: 1,
                           child: GestureDetector(
-                            onTap: (!isProcessing && hasOriginal)
-                                ? _togglePlayOriginal
-                                : null,
+                            behavior: HitTestBehavior.opaque,
+                            onTap: isProcessing
+                                ? null
+                                : (hasOriginal
+                                    ? _togglePlayOriginal
+                                    : _showRecordFirstMessage),
                             child: Transform.scale(
                               scale: isProcessing ? _shrinkScale.value : 1.0,
                               child: Opacity(
                                 opacity: isProcessing
                                     ? _shrinkOpacity.value
-                                    : (hasOriginal ? 1.0 : 0.55),
+                                    : 1.0,
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 250),
                                   width: double.infinity,
@@ -770,14 +986,17 @@ class _RecordingScreenState extends State<RecordingScreen>
                                                   end: Alignment.bottomRight,
                                                 )
                                               : LinearGradient(
-                                                  colors: [
-                                                    const Color(
-                                                      0xFF1E293B,
-                                                    ).withValues(alpha: 0.6),
-                                                    const Color(
-                                                      0xFF0F172A,
-                                                    ).withValues(alpha: 0.6),
-                                                  ],
+                                                  colors: isDark
+                                                      ? const [
+                                                          Color(0xFF0F2338),
+                                                          Color(0xFF0C1B2B),
+                                                        ]
+                                                      : const [
+                                                          Color(0xFFEFF6FF),
+                                                          Color(0xFFDBEAFE),
+                                                        ],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
                                                 )),
                                     borderRadius: BorderRadius.circular(24),
                                     boxShadow: hasOriginal && !isProcessing
@@ -790,7 +1009,17 @@ class _RecordingScreenState extends State<RecordingScreen>
                                               spreadRadius: 1,
                                             ),
                                           ]
-                                        : null,
+                                        : (isDark
+                                            ? null
+                                            : [
+                                                BoxShadow(
+                                                  color: const Color(
+                                                    0xFF2563EB,
+                                                  ).withValues(alpha: 0.08),
+                                                  blurRadius: 10,
+                                                  offset: const Offset(0, 4),
+                                                ),
+                                              ]),
                                     border: Border.all(
                                       color: hasOriginal && !isProcessing
                                           ? Colors.white.withValues(alpha: 0.3)
@@ -798,7 +1027,11 @@ class _RecordingScreenState extends State<RecordingScreen>
                                                 ? const Color(
                                                     0xFF3B82F6,
                                                   ).withValues(alpha: 0.4)
-                                                : AppColors.darkSurfaceStrong),
+                                                : (isDark
+                                                    ? const Color(0xFF1E3A5F)
+                                                    : const Color(
+                                                        0xFF93C5FD,
+                                                      ))),
                                       width: 1.5,
                                     ),
                                   ),
@@ -813,9 +1046,18 @@ class _RecordingScreenState extends State<RecordingScreen>
                                           bottom: 0,
                                           height: 38,
                                           child: AudioSpectrumWave(
-                                            barColor: const Color(
-                                              0xFF172554,
-                                            ).withValues(alpha: 0.80),
+                                            barColor: _currentPlaying ==
+                                                    CurrentlyPlaying.original
+                                                ? const Color(
+                                                    0xFF172554,
+                                                  ).withValues(alpha: 0.80)
+                                                : (isDark
+                                                    ? const Color(
+                                                        0xFF1E3A5F,
+                                                      ).withValues(alpha: 0.40)
+                                                    : const Color(
+                                                        0xFF93C5FD,
+                                                      ).withValues(alpha: 0.40)),
                                             isActive:
                                                 _currentPlaying ==
                                                 CurrentlyPlaying.original,
@@ -835,7 +1077,7 @@ class _RecordingScreenState extends State<RecordingScreen>
                                                 mainAxisAlignment:
                                                     MainAxisAlignment.center,
                                                 children: [
-                                                  // Ícono no circular, grande estilo mic
+                                                  // Ícono normal play/pause (gris cuando está deshabilitado)
                                                   Icon(
                                                     _currentPlaying ==
                                                             CurrentlyPlaying
@@ -843,57 +1085,66 @@ class _RecordingScreenState extends State<RecordingScreen>
                                                         ? Icons.pause_rounded
                                                         : Icons
                                                               .play_arrow_rounded,
-                                                    color:
-                                                        hasOriginal &&
+                                                    color: hasOriginal &&
                                                             !isProcessing
                                                         ? Colors.white
                                                         : (isProcessing
                                                               ? Colors.white70
-                                                              : AppColors
-                                                                    .darkTextMuted),
+                                                              : (isDark
+                                                                  ? const Color(
+                                                                      0xFF64748B,
+                                                                    )
+                                                                  : const Color(
+                                                                      0xFF94A3B8,
+                                                                    ))),
                                                     size: 54,
                                                   ),
-                                                  const SizedBox(height: 8),
-                                                  Text(
-                                                    'Reproducir Audio Normal',
-                                                    textAlign: TextAlign.center,
-                                                    style: GoogleFonts.poppins(
-                                                      fontSize: 17,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color:
-                                                          hasOriginal &&
-                                                              !isProcessing
-                                                          ? Colors.white
-                                                          : (isProcessing
-                                                                ? Colors.white70
-                                                                : AppColors
-                                                                      .darkTextMuted),
+                                                  if (hasOriginal ||
+                                                      isProcessing) ...[
+                                                    const SizedBox(height: 8),
+                                                    Text(
+                                                      'Reproducir Audio Normal',
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                        fontSize: 17,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: hasOriginal &&
+                                                                !isProcessing
+                                                            ? Colors.white
+                                                            : (isProcessing
+                                                                  ? Colors
+                                                                        .white70
+                                                                  : (isDark
+                                                                      ? Colors
+                                                                            .white
+                                                                      : const Color(
+                                                                          0xFF1E3A8A,
+                                                                        ))),
+                                                      ),
                                                     ),
-                                                  ),
-                                                  Text(
-                                                    isProcessing
-                                                        ? 'Procesando sonido...'
-                                                        : (hasOriginal
-                                                              ? (_currentPlaying ==
-                                                                        CurrentlyPlaying
-                                                                            .original
-                                                                    ? 'Pausar audio normal'
-                                                                    : 'Sonido original grabado')
-                                                              : 'Disponible tras grabar un audio'),
-                                                    style: GoogleFonts.poppins(
-                                                      fontSize: 12,
-                                                      color:
-                                                          hasOriginal &&
-                                                              !isProcessing
-                                                          ? Colors.white70
-                                                          : (isProcessing
-                                                                ? Colors
-                                                                      .cyanAccent
-                                                                : AppColors
-                                                                      .darkTextMuted),
+                                                    Text(
+                                                      isProcessing
+                                                          ? 'Procesando sonido...'
+                                                          : (_currentPlaying ==
+                                                                  CurrentlyPlaying
+                                                                      .original
+                                                              ? 'Pausar audio normal'
+                                                              : 'Sonido original grabado'),
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.normal,
+                                                        color: hasOriginal &&
+                                                                !isProcessing
+                                                            ? Colors.white70
+                                                            : Colors.cyanAccent,
+                                                      ),
                                                     ),
-                                                  ),
+                                                  ],
                                                 ],
                                               ),
                                             ),
@@ -912,15 +1163,18 @@ class _RecordingScreenState extends State<RecordingScreen>
                         Expanded(
                           flex: 1,
                           child: GestureDetector(
-                            onTap: (!isProcessing && hasReversed)
-                                ? _togglePlayReverse
-                                : null,
+                            behavior: HitTestBehavior.opaque,
+                            onTap: isProcessing
+                                ? null
+                                : (hasReversed
+                                    ? _togglePlayReverse
+                                    : _showRecordFirstMessage),
                             child: Transform.scale(
                               scale: isProcessing ? _shrinkScale.value : 1.0,
                               child: Opacity(
                                 opacity: isProcessing
                                     ? _shrinkOpacity.value
-                                    : (hasReversed ? 1.0 : 0.55),
+                                    : 1.0,
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 250),
                                   width: double.infinity,
@@ -948,14 +1202,17 @@ class _RecordingScreenState extends State<RecordingScreen>
                                                   end: Alignment.bottomRight,
                                                 )
                                               : LinearGradient(
-                                                  colors: [
-                                                    const Color(
-                                                      0xFF1E293B,
-                                                    ).withValues(alpha: 0.6),
-                                                    const Color(
-                                                      0xFF0F172A,
-                                                    ).withValues(alpha: 0.6),
-                                                  ],
+                                                  colors: isDark
+                                                      ? const [
+                                                          Color(0xFF07271E),
+                                                          Color(0xFF051E17),
+                                                        ]
+                                                      : const [
+                                                          Color(0xFFECFDF5),
+                                                          Color(0xFFD1FAE5),
+                                                        ],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
                                                 )),
                                     borderRadius: BorderRadius.circular(24),
                                     boxShadow: hasReversed && !isProcessing
@@ -968,7 +1225,17 @@ class _RecordingScreenState extends State<RecordingScreen>
                                               spreadRadius: 1,
                                             ),
                                           ]
-                                        : null,
+                                        : (isDark
+                                            ? null
+                                            : [
+                                                BoxShadow(
+                                                  color: const Color(
+                                                    0xFF10B981,
+                                                  ).withValues(alpha: 0.08),
+                                                  blurRadius: 10,
+                                                  offset: const Offset(0, 4),
+                                                ),
+                                              ]),
                                     border: Border.all(
                                       color: hasReversed && !isProcessing
                                           ? Colors.white.withValues(alpha: 0.3)
@@ -976,7 +1243,11 @@ class _RecordingScreenState extends State<RecordingScreen>
                                                 ? const Color(
                                                     0xFF10B981,
                                                   ).withValues(alpha: 0.4)
-                                                : AppColors.darkSurfaceStrong),
+                                                : (isDark
+                                                    ? const Color(0xFF0D4233)
+                                                    : const Color(
+                                                        0xFFA7F3D0,
+                                                      ))),
                                       width: 1.5,
                                     ),
                                   ),
@@ -991,9 +1262,18 @@ class _RecordingScreenState extends State<RecordingScreen>
                                           bottom: 0,
                                           height: 38,
                                           child: AudioSpectrumWave(
-                                            barColor: const Color(
-                                              0xFF022C22,
-                                            ).withValues(alpha: 0.80),
+                                            barColor: _currentPlaying ==
+                                                    CurrentlyPlaying.reverse
+                                                ? const Color(
+                                                    0xFF022C22,
+                                                  ).withValues(alpha: 0.80)
+                                                : (isDark
+                                                    ? const Color(
+                                                        0xFF0D4233,
+                                                      ).withValues(alpha: 0.40)
+                                                    : const Color(
+                                                        0xFFA7F3D0,
+                                                      ).withValues(alpha: 0.40)),
                                             isActive:
                                                 _currentPlaying ==
                                                 CurrentlyPlaying.reverse,
@@ -1013,74 +1293,76 @@ class _RecordingScreenState extends State<RecordingScreen>
                                                 mainAxisAlignment:
                                                     MainAxisAlignment.center,
                                                 children: [
-                                                  // Ícono no circular al revés, grande estilo mic
-                                                  _currentPlaying ==
-                                                          CurrentlyPlaying
-                                                              .reverse
-                                                      ? const Icon(
-                                                          Icons.pause_rounded,
-                                                          color: Colors.white,
-                                                          size: 54,
-                                                        )
-                                                      : Transform.flip(
-                                                          flipX: true,
-                                                          child: Icon(
-                                                            Icons
-                                                                .play_arrow_rounded,
-                                                            color:
-                                                                hasReversed &&
-                                                                    !isProcessing
-                                                                ? Colors.white
-                                                                : (isProcessing
+                                                  // Ícono doble triángulo apuntando a la izquierda (fast_rewind_rounded, gris cuando está deshabilitado)
+                                                  Icon(
+                                                    _currentPlaying ==
+                                                            CurrentlyPlaying
+                                                                .reverse
+                                                        ? Icons.pause_rounded
+                                                        : Icons
+                                                              .fast_rewind_rounded,
+                                                    color: hasReversed &&
+                                                            !isProcessing
+                                                        ? Colors.white
+                                                        : (isProcessing
+                                                              ? Colors.white70
+                                                              : (isDark
+                                                                  ? const Color(
+                                                                      0xFF64748B,
+                                                                    )
+                                                                  : const Color(
+                                                                      0xFF94A3B8,
+                                                                    ))),
+                                                    size: 54,
+                                                  ),
+                                                  if (hasReversed ||
+                                                      isProcessing) ...[
+                                                    const SizedBox(height: 8),
+                                                    Text(
+                                                      'Reproducir en Reversa',
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                        fontSize: 17,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: hasReversed &&
+                                                                !isProcessing
+                                                            ? Colors.white
+                                                            : (isProcessing
+                                                                  ? Colors
+                                                                        .white70
+                                                                  : (isDark
                                                                       ? Colors
-                                                                            .white70
-                                                                      : AppColors
-                                                                            .darkTextMuted),
-                                                            size: 54,
-                                                          ),
-                                                        ),
-                                                  const SizedBox(height: 8),
-                                                  Text(
-                                                    'Reproducir en Reversa',
-                                                    textAlign: TextAlign.center,
-                                                    style: GoogleFonts.poppins(
-                                                      fontSize: 17,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color:
-                                                          hasReversed &&
-                                                              !isProcessing
-                                                          ? Colors.white
-                                                          : (isProcessing
-                                                                ? Colors.white70
-                                                                : AppColors
-                                                                      .darkTextMuted),
+                                                                            .white
+                                                                      : const Color(
+                                                                          0xFF064E3B,
+                                                                        ))),
+                                                      ),
                                                     ),
-                                                  ),
-                                                  Text(
-                                                    isProcessing
-                                                        ? 'Generando reverso...'
-                                                        : (hasReversed
-                                                              ? (_currentPlaying ==
-                                                                        CurrentlyPlaying
-                                                                            .reverse
-                                                                    ? 'Pausar audio en reversa'
-                                                                    : 'Sonido invertido listo')
-                                                              : 'Disponible al terminar de invertir'),
-                                                    style: GoogleFonts.poppins(
-                                                      fontSize: 12,
-                                                      color:
-                                                          hasReversed &&
-                                                              !isProcessing
-                                                          ? Colors.white70
-                                                          : (isProcessing
-                                                                ? const Color(
-                                                                    0xFF34D399,
-                                                                  )
-                                                                : AppColors
-                                                                      .darkTextMuted),
+                                                    Text(
+                                                      isProcessing
+                                                          ? 'Generando reverso...'
+                                                          : (_currentPlaying ==
+                                                                  CurrentlyPlaying
+                                                                      .reverse
+                                                              ? 'Pausar audio en reversa'
+                                                              : 'Sonido invertido listo'),
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.normal,
+                                                        color: hasReversed &&
+                                                                !isProcessing
+                                                            ? Colors.white70
+                                                            : const Color(
+                                                                0xFF34D399,
+                                                              ),
+                                                      ),
                                                     ),
-                                                  ),
+                                                  ],
                                                 ],
                                               ),
                                             ),
@@ -1100,10 +1382,10 @@ class _RecordingScreenState extends State<RecordingScreen>
                 ),
               ),
             ),
-
-            // AdMob Banner en la parte inferior exclusivo de la pantalla de grabación
-            if (_isBannerLoaded && _bannerAd != null)
-              Container(
+      bottomNavigationBar: (_isBannerLoaded && _bannerAd != null)
+          ? SafeArea(
+              top: false,
+              child: Container(
                 alignment: Alignment.center,
                 width: _bannerAd!.size.width.toDouble(),
                 height: _bannerAd!.size.height.toDouble(),
@@ -1112,9 +1394,8 @@ class _RecordingScreenState extends State<RecordingScreen>
                 ),
                 child: AdWidget(ad: _bannerAd!),
               ),
-          ],
-        ),
-      ),
+            )
+          : null,
     );
   }
 }
