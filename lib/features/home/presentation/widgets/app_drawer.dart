@@ -63,8 +63,7 @@ class AppDrawer extends StatelessWidget {
                     width: 52,
                     height: 52,
                     decoration: BoxDecoration(
-                      gradient: AppColors.buttonMicGradient,
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.primaryBlue.withValues(alpha: 0.35),
@@ -73,10 +72,22 @@ class AppDrawer extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.graphic_eq_rounded,
-                      color: Colors.white,
-                      size: 28,
+                    clipBehavior: Clip.antiAlias,
+                    child: Image.asset(
+                      'assets/logo_actual.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          decoration: const BoxDecoration(
+                            gradient: AppColors.buttonMicGradient,
+                          ),
+                          child: const Icon(
+                            Icons.graphic_eq_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 16),

@@ -129,16 +129,33 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
                           const SizedBox(height: 16),
 
-                          // Título de la app: Retrovoz Challenge
-                          Text(
-                            widget.title,
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.poppins(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              letterSpacing: -0.5,
-                            ),
+                          // Título de la app: Retrovoz en primera línea y Challenge debajo en menor tamaño
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Retrovoz',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: -0.5,
+                                  height: 1.1,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Challenge',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white.withValues(alpha: 0.85),
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                            ],
                           ),
 
                           SizedBox(height: height * 0.05),
@@ -148,7 +165,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
                             padding: const EdgeInsets.all(8),
                             child: LoadingProgressBar(
                               width: width * 0.70,
-                              lineHeight: 12,
+                              lineHeight: 18,
                               animationDurationMs:
                                   widget.loadingDuration.inMilliseconds,
                               onAnimationEnd: () {
