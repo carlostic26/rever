@@ -533,11 +533,9 @@ class _RecordingScreenState extends State<RecordingScreen>
         final String revPath = reverseResult.reversedPath!;
 
         try {
-          // Precargamos ambos reproductores para garantizar reproducción y pausa instantánea
-          await Future.wait([
-            _originalPlayerService.loadAudioFile(origPath),
-            _reversePlayerService.loadAudioFile(revPath),
-          ]);
+          // Precargamos ambos reproductores de forma secuencial para evitar contención en AudioSession/ExoPlayer
+          await _originalPlayerService.loadAudioFile(origPath);
+          await _reversePlayerService.loadAudioFile(revPath);
 
           if (!mounted) return;
 

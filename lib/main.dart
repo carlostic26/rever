@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -10,15 +12,20 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Cargar variables de entorno (.env) para AdMob y configuración
-  await dotenv.load(fileName: '.env');
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    debugPrint('[main] No se pudo cargar .env, usando valores de respaldo: $e');
+  }
 
   // Inicialización de inyección de dependencias y servicios (Clean Architecture)
   await InjectionContainer.init();
 
-  // Inicializar SDK de Google Mobile Ads
-  await InjectionContainer.initializeAdsUseCase();
-
+  // Ejecutar runApp de inmediato para no bloquear el splash nativo
   runApp(const ReverApp());
+
+  // Inicializar SDK de Google Mobile Ads en segundo plano sin bloquear la UI
+  unawaited(InjectionContainer.initializeAdsUseCase());
 }
 
 class ReverApp extends StatelessWidget {

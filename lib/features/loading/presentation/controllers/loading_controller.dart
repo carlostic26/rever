@@ -32,21 +32,20 @@ class LoadingController extends ChangeNotifier {
   Future<void> startLoading({
     Duration delay = const Duration(seconds: 7),
   }) async {
-    // 1. Inicializar SDK de AdMob
-    await initializeAdsUseCase();
-
-    // 2. Cargar y mostrar el anuncio de apertura (App Open Ad) durante la carga inicial
-    unawaited(_loadAndShowAppOpenAd());
-
-    // 3. Temporizador de 7 segundos para habilitar el botón
+    // 1. Temporizador de 7 segundos iniciado de inmediato para no bloquear la UI
+    //    incluso si Google Play Services / AdMob tarda en responder en el emulador.
     _timer?.cancel();
     _timer = Timer(delay, () {
       enableButton();
     });
+
+    // 2. Inicializar SDK de AdMob y mostrar App Open Ad en segundo plano
+    unawaited(_initAndShowAppOpenAd());
   }
 
-  Future<void> _loadAndShowAppOpenAd() async {
+  Future<void> _initAndShowAppOpenAd() async {
     try {
+      await initializeAdsUseCase();
       await loadAppOpenAdUseCase();
       await showAppOpenAdUseCase();
     } catch (e) {

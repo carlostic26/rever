@@ -49,6 +49,12 @@ android {
         multiDexEnabled = true
     }
 
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+
     signingConfigs {
         release {
             keyAlias keystoreProperties['keyAlias']

@@ -24,6 +24,8 @@ class AdMobRemoteDataSourceImpl implements AdMobRemoteDataSource {
   AppOpenAd? _appOpenAd;
   InterstitialAd? _interstitialAd;
   bool _isShowingAd = false;
+  bool _isInitialized = false;
+  Future<void>? _initializingFuture;
 
   @override
   bool get isAppOpenAdLoaded => _appOpenAd != null;
@@ -33,11 +35,28 @@ class AdMobRemoteDataSourceImpl implements AdMobRemoteDataSource {
 
   @override
   Future<void> initialize() async {
+    if (_isInitialized) return;
+    if (_initializingFuture != null) {
+      return _initializingFuture!;
+    }
+
+    _initializingFuture = _doInitialize();
     try {
-      await MobileAds.instance.initialize();
+      await _initializingFuture;
+    } finally {
+      _initializingFuture = null;
+    }
+  }
+
+  Future<void> _doInitialize() async {
+    try {
+      await MobileAds.instance.initialize().timeout(
+        const Duration(seconds: 5),
+      );
+      _isInitialized = true;
       debugPrint('[AdMobRemoteDataSource] MobileAds inicializado correctamente.');
     } catch (e) {
-      debugPrint('[AdMobRemoteDataSource] Error al inicializar MobileAds: $e');
+      debugPrint('[AdMobRemoteDataSource] Error o timeout al inicializar MobileAds: $e');
     }
   }
 
@@ -71,7 +90,12 @@ class AdMobRemoteDataSourceImpl implements AdMobRemoteDataSource {
       _appOpenAd = null;
       if (!completer.isCompleted) completer.complete();
     }
-    return completer.future;
+    return completer.future.timeout(
+      const Duration(seconds: 6),
+      onTimeout: () {
+        debugPrint('[AdMobRemoteDataSource] Timeout esperando AppOpenAd.');
+      },
+    );
   }
 
   @override
@@ -132,7 +156,12 @@ class AdMobRemoteDataSourceImpl implements AdMobRemoteDataSource {
       _interstitialAd = null;
       if (!completer.isCompleted) completer.complete();
     }
-    return completer.future;
+    return completer.future.timeout(
+      const Duration(seconds: 6),
+      onTimeout: () {
+        debugPrint('[AdMobRemoteDataSource] Timeout esperando InterstitialAd.');
+      },
+    );
   }
 
   @override
@@ -171,4 +200,3 @@ class AdMobRemoteDataSourceImpl implements AdMobRemoteDataSource {
     _interstitialAd = null;
   }
 }
-
