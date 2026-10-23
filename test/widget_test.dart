@@ -60,7 +60,6 @@ void main() {
       expect(find.text('Comenzar'), findsOneWidget);
       expect(find.text('Grabaciones guardadas'), findsOneWidget);
       expect(find.text('Retrovoz Challenge'), findsOneWidget);
-      expect(find.text('Sonidos en reversa'), findsOneWidget);
     },
   );
 

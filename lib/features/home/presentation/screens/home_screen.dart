@@ -51,27 +51,14 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Retrovoz Challenge',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
-                    color: textColor,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                Text(
-                  'Sonidos en reversa',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.secondaryGreen,
-                  ),
-                ),
-              ],
+            Text(
+              'Retrovoz Challenge',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                color: textColor,
+                letterSpacing: -0.5,
+              ),
             ),
           ],
         ),

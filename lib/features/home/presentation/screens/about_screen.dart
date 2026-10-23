@@ -66,11 +66,10 @@ class AboutScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     Container(
-                      width: 68,
-                      height: 68,
+                      width: 80,
+                      height: 80,
                       decoration: BoxDecoration(
-                        gradient: AppColors.brandGradient,
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.primaryBlue.withValues(alpha: 0.35),
@@ -79,10 +78,22 @@ class AboutScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: const Icon(
-                        Icons.graphic_eq_rounded,
-                        color: Colors.white,
-                        size: 36,
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.asset(
+                        'assets/logo_actual.png',
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            decoration: const BoxDecoration(
+                              gradient: AppColors.brandGradient,
+                            ),
+                            child: const Icon(
+                              Icons.graphic_eq_rounded,
+                              color: Colors.white,
+                              size: 36,
+                            ),
+                          );
+                        },
                       ),
                     ),
                     const SizedBox(height: 14),

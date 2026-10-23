@@ -15,7 +15,7 @@ class LoadingProgressBar extends StatelessWidget {
   const LoadingProgressBar({
     super.key,
     required this.width,
-    this.lineHeight = 12.0,
+    this.lineHeight = 18.0,
     this.animationDurationMs = 7000,
     this.linearGradient,
     this.backgroundColor = const Color(0xFF0E2536),
@@ -25,38 +25,25 @@ class LoadingProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(lineHeight),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.secondaryGreen.withValues(alpha: 0.4),
-            blurRadius: 12,
-            spreadRadius: 1,
-            offset: const Offset(0, 2),
+    return LinearPercentIndicator(
+      width: width,
+      lineHeight: lineHeight,
+      percent: 1.0,
+      animation: true,
+      animationDuration: animationDurationMs,
+      curve: curve,
+      linearGradient: linearGradient ??
+          const LinearGradient(
+            colors: [
+              AppColors.primaryBlue,
+              AppColors.neonCyan,
+              AppColors.secondaryGreen,
+            ],
           ),
-        ],
-      ),
-      child: LinearPercentIndicator(
-        width: width,
-        lineHeight: lineHeight,
-        percent: 1.0,
-        animation: true,
-        animationDuration: animationDurationMs,
-        curve: curve,
-        linearGradient: linearGradient ??
-            const LinearGradient(
-              colors: [
-                AppColors.primaryBlue,
-                AppColors.neonCyan,
-                AppColors.secondaryGreen,
-              ],
-            ),
-        backgroundColor: backgroundColor,
-        barRadius: Radius.circular(lineHeight),
-        alignment: MainAxisAlignment.center,
-        onAnimationEnd: onAnimationEnd,
-      ),
+      backgroundColor: backgroundColor,
+      barRadius: Radius.circular(lineHeight),
+      alignment: MainAxisAlignment.center,
+      onAnimationEnd: onAnimationEnd,
     );
   }
 }

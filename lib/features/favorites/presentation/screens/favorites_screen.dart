@@ -29,6 +29,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   // Estado de reproducción
   int? _currentlyPlayingId;
+  bool _isStartingPlayback = false;
   StreamSubscription<PlayerState>? _playerStateSub;
 
   // Banner Ad adaptativo de AdMob
@@ -43,12 +44,22 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     _playerService = InjectionContainer.createAudioPlayerService();
 
     _playerStateSub = _playerService.playerStateStream.listen((state) {
-      if (!mounted) return;
+      if (!mounted || _isStartingPlayback) return;
       final bool isPlaying = state.playing;
       final bool isCompleted =
           state.processingState == ProcessingState.completed;
 
-      if (!isPlaying || isCompleted) {
+      if (isCompleted) {
+        _playerService.pause();
+        _playerService.seek(Duration.zero);
+        if (_currentlyPlayingId != null) {
+          setState(() {
+            _currentlyPlayingId = null;
+          });
+        }
+      } else if (!isPlaying &&
+          state.processingState != ProcessingState.loading &&
+          state.processingState != ProcessingState.buffering) {
         if (_currentlyPlayingId != null) {
           setState(() {
             _currentlyPlayingId = null;
@@ -133,23 +144,28 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     try {
       if (_currentlyPlayingId == audio.id) {
         // Pausar
-        await _playerService.pause();
+        _isStartingPlayback = false;
         if (mounted) {
           setState(() {
             _currentlyPlayingId = null;
           });
         }
+        await _playerService.pause();
       } else {
-        // Reproducir
-        await _playerService.loadAudioFile(audio.filePath);
-        await _playerService.play();
+        // Reproducir: actualizar estado visual a pausa inmediatamente
+        _isStartingPlayback = true;
         if (mounted) {
           setState(() {
             _currentlyPlayingId = audio.id;
           });
         }
+        await _playerService.loadAudioFile(audio.filePath);
+        _isStartingPlayback = false;
+        if (!mounted || _currentlyPlayingId != audio.id) return;
+        await _playerService.play();
       }
     } catch (e) {
+      _isStartingPlayback = false;
       debugPrint('[FavoritesScreen] Error al reproducir audio favorito: $e');
       if (mounted) {
         setState(() {
