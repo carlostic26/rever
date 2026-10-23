@@ -116,7 +116,7 @@ class AboutScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        'Versión 1.0.0',
+                        'Versión ${AppConstants.appVersion}',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,

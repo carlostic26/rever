@@ -8,6 +8,7 @@ import '../../features/ads/domain/usecases/show_app_open_ad_usecase.dart';
 import '../../features/ads/domain/usecases/show_interstitial_ad_usecase.dart';
 import '../../features/favorites/domain/services/favorites_service.dart';
 import '../../features/loading/presentation/controllers/loading_controller.dart';
+import '../constants/app_constants.dart';
 import '../services/audio_player_service.dart';
 import '../services/audio_recording_service.dart';
 import '../services/audio_reverse_service.dart';
@@ -30,6 +31,9 @@ class InjectionContainer {
   static late final ShowInterstitialAdUseCase showInterstitialAdUseCase;
 
   static Future<void> init() async {
+    // Sincronizar versión de la app desde pubspec.yaml
+    await AppConstants.loadVersionFromPubspec();
+
     // 0. Theme Controller (Light por defecto con soporte Dark)
     themeController = ThemeController();
 
