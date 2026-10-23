@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -272,7 +273,7 @@ class AppDrawer extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
-                'v1.0.0 • Retrovoz Challenge',
+                'v${AppConstants.appVersion} • Retrovoz Challenge',
                 style: GoogleFonts.poppins(
                   fontSize: 11,
                   color: isDark
