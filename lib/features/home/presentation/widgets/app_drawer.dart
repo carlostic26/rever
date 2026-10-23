@@ -4,25 +4,23 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../screens/coming_soon_screen.dart';
+import '../screens/blog_article_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
-  void _navigateToComingSoon(
+  void _navigateToBlog(
     BuildContext context, {
     required String title,
-    required String description,
-    required IconData icon,
+    required String url,
   }) {
     Navigator.pop(context); // Cierra el Drawer
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ComingSoonScreen(
+        builder: (_) => BlogArticleScreen(
           title: title,
-          description: description,
-          icon: icon,
+          url: url,
         ),
       ),
     );
@@ -118,79 +116,18 @@ class AppDrawer extends StatelessWidget {
                   horizontal: 12,
                 ),
                 children: [
-                  // 1. Inicio
-                  _DrawerItem(
-                    icon: Icons.home_rounded,
-                    title: 'Inicio',
-                    isSelected: true,
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  // 2. Mis audios
-                  _DrawerItem(
-                    icon: Icons.mic_none_rounded,
-                    title: 'Mis audios',
-                    onTap: () => _navigateToComingSoon(
-                      context,
-                      title: 'Mis audios',
-                      description:
-                          'Gestiona, organiza y escucha tus grabaciones anteriores.',
-                      icon: Icons.library_music_rounded,
-                    ),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  // 3. Favoritos
-                  _DrawerItem(
-                    icon: Icons.favorite_border_rounded,
-                    title: 'Favoritos',
-                    onTap: () => _navigateToComingSoon(
-                      context,
-                      title: 'Favoritos',
-                      description:
-                          'Tus audios invertidos y retos favoritos en un solo lugar.',
-                      icon: Icons.favorite_rounded,
-                    ),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  // 4. Ajustes
-                  _DrawerItem(
-                    icon: Icons.tune_rounded,
-                    title: 'Ajustes',
-                    onTap: () => _navigateToComingSoon(
-                      context,
-                      title: 'Ajustes',
-                      description:
-                          'Configura la calidad de grabación, velocidad de inversión y preferencias.',
-                      icon: Icons.settings_rounded,
-                    ),
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Divider(
-                      color: borderColor,
-                      thickness: 1,
-                    ),
-                  ),
-
-                  // Switch de Tema (Claro / Oscuro)
+                  // 1. Switch de Tema (Claro / Oscuro) en primer lugar
                   ListenableBuilder(
                     listenable: InjectionContainer.themeController,
                     builder: (context, _) {
                       final bool isDarkActive =
                           InjectionContainer.themeController.isDarkMode;
                       return Container(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 4,
+                        margin: const EdgeInsets.only(
+                          left: 4,
+                          right: 4,
+                          bottom: 10,
+                          top: 4,
                         ),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
@@ -243,9 +180,70 @@ class AppDrawer extends StatelessWidget {
                     },
                   ),
 
+                  // 2. Inicio
+                  _DrawerItem(
+                    icon: Icons.home_rounded,
+                    title: 'Inicio',
+                    isSelected: true,
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+
                   const SizedBox(height: 4),
 
-                  // 5. Política de Privacidad
+                  // 3. Favoritos (Audios guardados)
+                  _DrawerItem(
+                    icon: Icons.favorite_rounded,
+                    title: 'Favoritos',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, AppRoutes.favorites);
+                    },
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Divider(
+                      color: borderColor,
+                      thickness: 1,
+                    ),
+                  ),
+
+                  // --- Entradas del Blog Oficial ---
+                  _DrawerItem(
+                    icon: Icons.sports_esports_outlined,
+                    title: 'Cómo jugar con Retrovoz Challenge',
+                    onTap: () => _navigateToBlog(
+                      context,
+                      title: 'Cómo jugar con Retrovoz Challenge',
+                      url:
+                          'https://retrovoz.blogspot.com/2026/10/como-jugar-adivinar-sonidos-al-reves.html',
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  _DrawerItem(
+                    icon: Icons.auto_awesome_rounded,
+                    title: 'Graba, invierte y juega',
+                    onTap: () => _navigateToBlog(
+                      context,
+                      title: 'Graba, invierte y juega',
+                      url:
+                          'https://retrovoz.blogspot.com/2026/10/retrovoz-challenge-graba-invierte-y.html',
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Divider(
+                      color: borderColor,
+                      thickness: 1,
+                    ),
+                  ),
+
+                  // 4. Política de Privacidad
                   _DrawerItem(
                     icon: Icons.privacy_tip_outlined,
                     title: 'Política de Privacidad',
@@ -257,17 +255,14 @@ class AppDrawer extends StatelessWidget {
 
                   const SizedBox(height: 4),
 
-                  // 6. Acerca de
+                  // 5. Acerca de (Explicación detallada de la app basada en el blog oficial)
                   _DrawerItem(
                     icon: Icons.info_outline_rounded,
                     title: 'Acerca de',
-                    onTap: () => _navigateToComingSoon(
-                      context,
-                      title: 'Acerca de',
-                      description:
-                          'Retrovoz Challenge v1.0.0\nLa app para escuchar y adivinar palabras y sonidos reproducidos en reversa.',
-                      icon: Icons.graphic_eq_rounded,
-                    ),
+                    onTap: () {
+                      Navigator.pop(context); // Cierra el Drawer
+                      Navigator.pushNamed(context, AppRoutes.about);
+                    },
                   ),
                 ],
               ),

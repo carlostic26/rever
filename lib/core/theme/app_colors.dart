@@ -40,6 +40,7 @@ class AppColors {
   static const Color statusSuccess = Color(0xFF10B981);
   static const Color statusWarning = Color(0xFFF59E0B);
   static const Color statusRecording = Color(0xFFEF4444);
+  static const Color errorRed = Color(0xFFEF4444);
 
   // Degradados de la marca (Prevaleciendo Azul y Verde)
   static const LinearGradient brandGradient = LinearGradient(

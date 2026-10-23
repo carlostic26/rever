@@ -8,6 +8,7 @@
         android:label="Retrovoz Challenge"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
         android:largeHeap="true">
         <!-- Sample AdMob app ID, test: ca-app-pub-3940256099942544~3347511713 || real: ca-app-pub-4336409771912215~2143578189 -->
         <meta-data

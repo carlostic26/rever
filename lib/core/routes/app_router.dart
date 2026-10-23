@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../features/favorites/presentation/screens/favorites_screen.dart';
+import '../../features/home/presentation/screens/about_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/home/presentation/screens/privacy_policy_screen.dart';
 import '../../features/home/presentation/screens/recording_screen.dart';
@@ -33,12 +35,24 @@ class AppRouter {
           settings: settings,
         );
 
+      case AppRoutes.favorites:
+        return MaterialPageRoute(
+          builder: (_) => const FavoritesScreen(),
+          settings: settings,
+        );
+
       case AppRoutes.privacyPolicy:
         final url = settings.arguments as String?;
         return MaterialPageRoute(
           builder: (_) => url != null
               ? PrivacyPolicyScreen(url: url)
               : const PrivacyPolicyScreen(),
+          settings: settings,
+        );
+
+      case AppRoutes.about:
+        return MaterialPageRoute(
+          builder: (_) => const AboutScreen(),
           settings: settings,
         );
 

@@ -6,6 +6,7 @@ import '../../features/ads/domain/usecases/load_app_open_ad_usecase.dart';
 import '../../features/ads/domain/usecases/load_interstitial_ad_usecase.dart';
 import '../../features/ads/domain/usecases/show_app_open_ad_usecase.dart';
 import '../../features/ads/domain/usecases/show_interstitial_ad_usecase.dart';
+import '../../features/favorites/domain/services/favorites_service.dart';
 import '../../features/loading/presentation/controllers/loading_controller.dart';
 import '../services/audio_player_service.dart';
 import '../services/audio_recording_service.dart';
@@ -68,5 +69,13 @@ class InjectionContainer {
   /// Crea una instancia del servicio de reproducción de audio
   static AudioPlayerService createAudioPlayerService() {
     return AudioPlayerService();
+  }
+
+  static FavoritesService? _favoritesService;
+
+  /// Obtiene o crea la instancia del servicio de favoritos (SQLite)
+  static FavoritesService getFavoritesService() {
+    _favoritesService ??= FavoritesService();
+    return _favoritesService!;
   }
 }

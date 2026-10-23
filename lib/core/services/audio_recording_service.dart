@@ -106,6 +106,9 @@ class AudioRecordingService {
 
       // Directorio de almacenamiento local
       final Directory dir = await getApplicationDocumentsDirectory();
+      // Limpiar grabaciones temporales anteriores para mantener solo un máximo de 20
+      unawaited(_cleanOldSessionRecordings(dir));
+
       final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
       final String targetPath = '${dir.path}/rever_rec_$timestamp.wav';
       _currentRecordingPath = targetPath;
@@ -206,6 +209,41 @@ class AudioRecordingService {
       _isTransitioning = false;
       _currentRecordingPath = null;
       _recordStartTime = null;
+    }
+  }
+
+  /// Mantiene como máximo las últimas [maxKeep] grabaciones de sesión (20)
+  /// para evitar saturar el almacenamiento local.
+  Future<void> _cleanOldSessionRecordings(
+    Directory dir, {
+    int maxKeep = 20,
+  }) async {
+    try {
+      final List<FileSystemEntity> entities = await dir.list().toList();
+      final List<File> audioFiles = entities
+          .whereType<File>()
+          .where((f) {
+            final name = f.uri.pathSegments.last;
+            return (name.startsWith('rever_rec_') ||
+                    name.startsWith('rever_rev_')) &&
+                name.endsWith('.wav');
+          })
+          .toList();
+
+      if (audioFiles.length > maxKeep) {
+        audioFiles.sort(
+          (a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()),
+        );
+        for (int i = maxKeep; i < audioFiles.length; i++) {
+          try {
+            await audioFiles[i].delete();
+          } catch (_) {}
+        }
+      }
+    } catch (e) {
+      debugPrint(
+        '[AudioRecordingService] Error limpiando grabaciones antiguas: $e',
+      );
     }
   }
 

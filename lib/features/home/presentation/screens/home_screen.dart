@@ -4,14 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../widgets/app_drawer.dart';
-import 'coming_soon_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     final Color bgColor =
@@ -22,20 +20,21 @@ class HomeScreen extends StatelessWidget {
         isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
 
     return Scaffold(
-      key: scaffoldKey,
       backgroundColor: bgColor,
       drawer: const AppDrawer(),
       appBar: AppBar(
         backgroundColor: bgColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.menu_rounded,
-            color: textColor,
-            size: 26,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: Icon(
+              Icons.menu_rounded,
+              color: textColor,
+              size: 26,
+            ),
+            tooltip: 'Abrir menú',
+            onPressed: () => Scaffold.of(context).openDrawer(),
           ),
-          tooltip: 'Abrir menú',
-          onPressed: () => scaffoldKey.currentState?.openDrawer(),
         ),
         title: Row(
           children: [
@@ -198,22 +197,12 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              // 2. SECCIÓN INFERIOR: "Grabaciones guardadas"
+              // 2. SECCIÓN INFERIOR: "Grabaciones guardadas" (Favoritos)
               Expanded(
                 flex: 1,
                 child: GestureDetector(
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ComingSoonScreen(
-                          title: 'Grabaciones guardadas',
-                          description:
-                              'Aquí podrás gestionar, reproducir y compartir todos tus audios grabados e invertidos.',
-                          icon: Icons.folder_special_rounded,
-                        ),
-                      ),
-                    );
+                    Navigator.pushNamed(context, AppRoutes.favorites);
                   },
                   child: Container(
                     width: double.infinity,

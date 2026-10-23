@@ -7,10 +7,12 @@ import 'package:just_audio/just_audio.dart';
 
 import '../../../../core/constants/admob_constants.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/routes/app_routes.dart';
 import '../../../../core/services/audio_player_service.dart';
 import '../../../../core/services/audio_recording_service.dart';
 import '../../../../core/services/audio_reverse_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../favorites/domain/services/favorites_service.dart';
 import '../models/home_audio_state.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/audio_spectrum_wave.dart';
@@ -34,6 +36,10 @@ class _RecordingScreenState extends State<RecordingScreen>
   late final AudioReverseService _reverseService;
   late final AudioPlayerService _originalPlayerService;
   late final AudioPlayerService _reversePlayerService;
+  late final FavoritesService _favoritesService;
+
+  // Estado de guardado en Favoritos del audio actual
+  bool _isCurrentAudioSaved = false;
 
   // Suscripciones de reproducción
   StreamSubscription<PlayerState>? _originalPlayerStateSub;
@@ -71,6 +77,7 @@ class _RecordingScreenState extends State<RecordingScreen>
     _reverseService = InjectionContainer.createAudioReverseService();
     _originalPlayerService = InjectionContainer.createAudioPlayerService();
     _reversePlayerService = InjectionContainer.createAudioPlayerService();
+    _favoritesService = InjectionContainer.getFavoritesService();
 
     // Precargar Interstitial Ad para que esté listo cuando se requiera
     unawaited(InjectionContainer.loadInterstitialAdUseCase());
@@ -412,6 +419,7 @@ class _RecordingScreenState extends State<RecordingScreen>
 
     _recordingDuration = Duration.zero;
     setState(() {
+      _isCurrentAudioSaved = false;
       _audioState = HomeAudioState(
         status: AudioSessionStatus.recording,
         statusText: 'Grabando audio...',
@@ -588,6 +596,104 @@ class _RecordingScreenState extends State<RecordingScreen>
     }
   }
 
+  // Guardar únicamente el audio en reversa en la sección de Favoritos (SQLite)
+  Future<void> _saveCurrentReverseToFavorites() async {
+    if (!_audioState.isReady || _audioState.reversedAudioPath == null) {
+      _showRecordFirstMessage();
+      return;
+    }
+
+    if (_isCurrentAudioSaved) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Este sonido ya está en tus Favoritos',
+            style: GoogleFonts.poppins(color: Colors.white),
+          ),
+          backgroundColor: AppColors.darkSurfaceCard,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+          action: SnackBarAction(
+            label: 'Ver',
+            textColor: AppColors.secondaryGreen,
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.favorites);
+            },
+          ),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final saved = await _favoritesService.saveFavorite(
+        tempReversedPath: _audioState.reversedAudioPath!,
+        duration: _audioState.recordedDuration ?? Duration.zero,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _isCurrentAudioSaved = true;
+      });
+
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(
+                Icons.favorite_rounded,
+                color: Colors.redAccent,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Guardado: ${saved.name}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.darkSurfaceCard,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'Ver Favoritos',
+            textColor: AppColors.secondaryGreen,
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.favorites);
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('[RecordingScreen] Error guardando favorito: $e');
+      if (mounted) {
+        final isPluginMissing = e.toString().contains('MissingPluginException');
+        final message = isPluginMissing
+            ? 'Reinicia la app (Stop y Run) para cargar la base de datos.'
+            : 'No se pudo guardar el audio en favoritos. Inténtalo de nuevo.';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              message,
+              style: GoogleFonts.poppins(color: Colors.white),
+            ),
+            backgroundColor: AppColors.errorRed,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   // Reproducir/pausar audio normal de forma inmediata (Container 2 - Azul)
   Future<void> _togglePlayOriginal() async {
     if (!_audioState.isReady) return;
@@ -711,6 +817,43 @@ class _RecordingScreenState extends State<RecordingScreen>
             ),
           ],
         ),
+        actions: [
+          // Botón de Corazón / Guardar en Favoritos en el AppBar
+          IconButton(
+            icon: Icon(
+              _isCurrentAudioSaved
+                  ? Icons.favorite_rounded
+                  : Icons.favorite_border_rounded,
+              color: hasReversed && !isProcessing
+                  ? (_isCurrentAudioSaved
+                      ? Colors.redAccent
+                      : (isDark ? Colors.white : AppColors.primaryBlue))
+                  : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+              size: 24,
+            ),
+            tooltip: hasReversed && !isProcessing
+                ? (_isCurrentAudioSaved
+                    ? 'Guardado en Favoritos'
+                    : 'Guardar sonido en Favoritos')
+                : 'Disponible tras generar el audio',
+            onPressed: hasReversed && !isProcessing
+                ? _saveCurrentReverseToFavorites
+                : _showRecordFirstMessage,
+          ),
+          // Acceso a la lista de Favoritos
+          IconButton(
+            icon: Icon(
+              Icons.bookmarks_rounded,
+              color: textPrimary,
+              size: 22,
+            ),
+            tooltip: 'Ver Favoritos',
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.favorites);
+            },
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -1277,6 +1420,52 @@ class _RecordingScreenState extends State<RecordingScreen>
                                             isActive:
                                                 _currentPlaying ==
                                                 CurrentlyPlaying.reverse,
+                                          ),
+                                        ),
+
+                                        // Botón de corazón para guardar audio reverso en Favoritos
+                                        Positioned(
+                                          top: 10,
+                                          right: 10,
+                                          child: GestureDetector(
+                                            behavior: HitTestBehavior.opaque,
+                                            onTap: hasReversed && !isProcessing
+                                                ? _saveCurrentReverseToFavorites
+                                                : _showRecordFirstMessage,
+                                            child: Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: hasReversed && !isProcessing
+                                                    ? (_isCurrentAudioSaved
+                                                        ? Colors.white
+                                                        : Colors.black.withValues(alpha: 0.18))
+                                                    : Colors.transparent,
+                                                border: Border.all(
+                                                  color: hasReversed && !isProcessing
+                                                      ? (_isCurrentAudioSaved
+                                                          ? Colors.redAccent
+                                                          : Colors.white.withValues(alpha: 0.45))
+                                                      : (isDark
+                                                          ? const Color(0xFF64748B).withValues(alpha: 0.3)
+                                                          : const Color(0xFF94A3B8).withValues(alpha: 0.3)),
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                              child: Icon(
+                                                _isCurrentAudioSaved
+                                                    ? Icons.favorite_rounded
+                                                    : Icons.favorite_border_rounded,
+                                                size: 22,
+                                                color: hasReversed && !isProcessing
+                                                    ? (_isCurrentAudioSaved
+                                                        ? Colors.redAccent
+                                                        : Colors.white)
+                                                    : (isDark
+                                                        ? const Color(0xFF64748B)
+                                                        : const Color(0xFF94A3B8)),
+                                              ),
+                                            ),
                                           ),
                                         ),
 

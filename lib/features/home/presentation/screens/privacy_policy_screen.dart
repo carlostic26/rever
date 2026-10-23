@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import '../../../../core/constants/admob_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class PrivacyPolicyScreen extends StatefulWidget {
@@ -20,6 +22,11 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
   late final WebViewController _controller;
   bool _isLoading = true;
   int _loadingProgress = 0;
+
+  // Banner Ad adaptativo de AdMob
+  BannerAd? _bannerAd;
+  bool _isBannerLoaded = false;
+  bool _isLoadingBanner = false;
 
   @override
   void initState() {
@@ -58,6 +65,61 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
         ),
       )
       ..loadRequest(Uri.parse(widget.url));
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_bannerAd == null && !_isLoadingBanner) {
+      _loadAdaptiveBannerAd();
+    }
+  }
+
+  Future<void> _loadAdaptiveBannerAd() async {
+    _isLoadingBanner = true;
+    final int width = MediaQuery.of(context).size.width.truncate();
+
+    AnchoredAdaptiveBannerAdSize? adaptiveSize;
+    try {
+      adaptiveSize =
+          await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(width);
+    } catch (e) {
+      debugPrint('[PrivacyPolicyScreen] Error calculando tamaño banner: $e');
+    }
+
+    if (!mounted) return;
+
+    _bannerAd = BannerAd(
+      adUnitId: AdMobConstants.bannerAdUnitId,
+      size: adaptiveSize ?? AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          if (mounted) {
+            setState(() {
+              _isBannerLoaded = true;
+            });
+          }
+        },
+        onAdFailedToLoad: (ad, error) {
+          debugPrint('[PrivacyPolicyScreen] Error cargando BannerAd: $error');
+          ad.dispose();
+          if (mounted) {
+            setState(() {
+              _bannerAd = null;
+              _isBannerLoaded = false;
+            });
+          }
+        },
+      ),
+    );
+    await _bannerAd?.load();
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
   }
 
   @override
@@ -121,6 +183,18 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
       body: SafeArea(
         child: WebViewWidget(controller: _controller),
       ),
+      bottomNavigationBar: (_isBannerLoaded && _bannerAd != null)
+          ? SafeArea(
+              top: false,
+              child: Container(
+                alignment: Alignment.center,
+                width: _bannerAd!.size.width.toDouble(),
+                height: _bannerAd!.size.height.toDouble(),
+                decoration: BoxDecoration(color: bgColor),
+                child: AdWidget(ad: _bannerAd!),
+              ),
+            )
+          : null,
     );
   }
 }

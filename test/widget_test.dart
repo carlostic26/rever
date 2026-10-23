@@ -192,6 +192,13 @@ void main() {
   testWidgets(
     'AppDrawer renders navigation options, privacy policy, and theme switch',
     (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
       SharedPreferences.setMockInitialValues({});
       InjectionContainer.themeController = ThemeController();
 
@@ -210,6 +217,9 @@ void main() {
 
       expect(find.text('Retrovoz Challenge'), findsOneWidget);
       expect(find.text('Modo Claro'), findsOneWidget);
+      expect(find.text('Favoritos'), findsOneWidget);
+      expect(find.text('Cómo jugar con Retrovoz Challenge'), findsOneWidget);
+      expect(find.text('Graba, invierte y juega'), findsOneWidget);
       expect(find.text('Política de Privacidad'), findsOneWidget);
       expect(find.byType(Switch), findsOneWidget);
     },
