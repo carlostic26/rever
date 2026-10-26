@@ -10,7 +10,7 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:largeHeap="true">
-        <!-- Sample AdMob app ID, test: ca-app-pub-3940256099942544~3347511713 || real: ca-app-pub-4336409771912215~2143578189 -->
+        <!-- Sample AdMob app ID, test: ca-app-pub-3940256099942544~3347511713 || real: ca-app-pub-4336409771912215~2439577951 -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-4336409771912215~2143578189"/>

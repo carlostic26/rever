@@ -17,7 +17,7 @@ class ReverAdsIdsTest {
       'ca-app-pub-3940256099942544/5224354917';
 }
 
-// IDs reales listos en .env para producción
+// IDs reales cargados dinámicamente desde el archivo .env (protegido por .gitignore)
 class ReverAdsIdsReal {
   String get bannerAdUnitId => dotenv.env['BANNER_AD_UNIT_ID'] ?? '';
   String get openAppAdUnitId => dotenv.env['OPEN_APP_AD_UNIT_ID'] ?? '';
@@ -29,11 +29,11 @@ class ReverAdsIdsReal {
 /// Manejador de IDs de anuncios activos.
 /// Actualmente configurado con IDs de prueba según lo solicitado.
 class ReverAdsIds {
-  static final ReverAdsIdsTest _testIds = ReverAdsIdsTest();
-  // static final ReverAdsIdsReal _realIds = ReverAdsIdsReal(); // Para producción
+  //static final ReverAdsIdsTest _testIds = ReverAdsIdsTest();
+  static final ReverAdsIdsReal _realIds = ReverAdsIdsReal(); // Para producción
 
-  static String get bannerAdUnitId => _testIds.bannerAdUnitId;
-  static String get openAppAdUnitId => _testIds.openAppAdUnitId;
-  static String get interstitialAdUnitId => _testIds.interstitialAdUnitId;
-  static String get rewardAdUnitId => _testIds.rewardAdUnitId;
+  static String get bannerAdUnitId => _realIds.bannerAdUnitId;
+  static String get openAppAdUnitId => _realIds.openAppAdUnitId;
+  static String get interstitialAdUnitId => _realIds.interstitialAdUnitId;
+  static String get rewardAdUnitId => _realIds.rewardAdUnitId;
 }

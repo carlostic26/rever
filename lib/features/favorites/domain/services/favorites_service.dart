@@ -30,9 +30,10 @@ class FavoritesService {
     final String hour = now.hour.toString().padLeft(2, '0');
     final String minute = now.minute.toString().padLeft(2, '0');
     final String second = now.second.toString().padLeft(2, '0');
+    final String ms = now.millisecond.toString().padLeft(3, '0');
 
     final String baseName =
-        'sonido-rever-$year-$month-${day}_$hour-$minute-$second';
+        'sonido-rever-$year-$month-${day}_$hour-$minute-${second}_$ms';
 
     // Directorio persistente de la app
     final Directory appDocDir = await getApplicationDocumentsDirectory();
