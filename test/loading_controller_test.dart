@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:rever/features/ads/domain/entities/ad_status.dart';
-import 'package:rever/features/ads/domain/repositories/ad_repository.dart';
-import 'package:rever/features/ads/domain/usecases/initialize_ads_usecase.dart';
-import 'package:rever/features/ads/domain/usecases/load_app_open_ad_usecase.dart';
-import 'package:rever/features/ads/domain/usecases/show_app_open_ad_usecase.dart';
-import 'package:rever/features/loading/presentation/controllers/loading_controller.dart';
+import 'package:retrovoz/features/ads/domain/entities/ad_status.dart';
+import 'package:retrovoz/features/ads/domain/repositories/ad_repository.dart';
+import 'package:retrovoz/features/ads/domain/usecases/initialize_ads_usecase.dart';
+import 'package:retrovoz/features/ads/domain/usecases/load_app_open_ad_usecase.dart';
+import 'package:retrovoz/features/ads/domain/usecases/show_app_open_ad_usecase.dart';
+import 'package:retrovoz/features/loading/presentation/controllers/loading_controller.dart';
 
 class MockAdRepository implements AdRepository {
   bool initialized = false;

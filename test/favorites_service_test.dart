@@ -5,9 +5,9 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
-import 'package:rever/features/favorites/data/database/favorites_database.dart';
-import 'package:rever/features/favorites/domain/models/favorite_audio.dart';
-import 'package:rever/features/favorites/domain/services/favorites_service.dart';
+import 'package:retrovoz/features/favorites/data/database/favorites_database.dart';
+import 'package:retrovoz/features/favorites/domain/models/favorite_audio.dart';
+import 'package:retrovoz/features/favorites/domain/services/favorites_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class MockPathProviderPlatform extends Fake

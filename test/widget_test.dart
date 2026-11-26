@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:rever/core/di/injection_container.dart';
-import 'package:rever/core/theme/theme_controller.dart';
-import 'package:rever/features/home/presentation/models/home_audio_state.dart';
-import 'package:rever/features/home/presentation/screens/home_screen.dart';
-import 'package:rever/features/home/presentation/widgets/app_drawer.dart';
-import 'package:rever/features/home/presentation/widgets/audio_spectrum_wave.dart';
-import 'package:rever/features/home/presentation/widgets/audio_state_indicator.dart';
-import 'package:rever/features/home/presentation/widgets/microphone_button.dart';
-import 'package:rever/features/home/presentation/widgets/reverse_audio_player_panel.dart';
-import 'package:rever/features/home/presentation/widgets/three_dots_indicator.dart';
-import 'package:rever/features/loading/presentation/widgets/counting_animation.dart';
+import 'package:retrovoz/core/di/injection_container.dart';
+import 'package:retrovoz/core/theme/theme_controller.dart';
+import 'package:retrovoz/features/home/presentation/models/home_audio_state.dart';
+import 'package:retrovoz/features/home/presentation/screens/home_screen.dart';
+import 'package:retrovoz/features/home/presentation/widgets/app_drawer.dart';
+import 'package:retrovoz/features/home/presentation/widgets/audio_spectrum_wave.dart';
+import 'package:retrovoz/features/home/presentation/widgets/audio_state_indicator.dart';
+import 'package:retrovoz/features/home/presentation/widgets/microphone_button.dart';
+import 'package:retrovoz/features/home/presentation/widgets/reverse_audio_player_panel.dart';
+import 'package:retrovoz/features/home/presentation/widgets/three_dots_indicator.dart';
+import 'package:retrovoz/features/loading/presentation/widgets/counting_animation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

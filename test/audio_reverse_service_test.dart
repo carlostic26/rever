@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:rever/core/services/audio_reverse_service.dart';
+import 'package:retrovoz/core/services/audio_reverse_service.dart';
 
 /// Utilidad para construir archivos WAV sintéticos en memoria para pruebas
 Uint8List createSyntheticPcmWav({
